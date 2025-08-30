@@ -1,68 +1,117 @@
 .App {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.controls {
-  margin: 2rem 0;
+.app-header {
   display: flex;
-  gap: 1rem;
-  justify-content: center;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
 }
 
-.controls button {
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.controls button:hover:not(:disabled) {
-  background-color: #0056b3;
-}
-
-.controls button:disabled {
-  background-color: #6c757d;
-  cursor: not-allowed;
-}
-
-.error {
-  background-color: #f8d7da;
-  color: #721c24;
-  padding: 1rem;
-  border-radius: 4px;
-  margin: 1rem 0;
-  border: 1px solid #f5c6cb;
-}
-
-.data-display {
-  margin-top: 2rem;
-  text-align: left;
-}
-
-.data-display h2 {
-  text-align: center;
+.app-header h1 {
+  margin: 0;
   color: #333;
 }
 
-.latest-record {
-  background-color: #f8f9fa;
-  padding: 1rem;
-  border-radius: 4px;
-  margin-top: 1rem;
+.connection-status {
+  font-size: 14px;
 }
 
-.latest-record pre {
-  background-color: #343a40;
-  color: #f8f9fa;
-  padding: 1rem;
+.status {
+  padding: 4px 8px;
   border-radius: 4px;
-  overflow-x: auto;
-  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.status.connected {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status.disconnected {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+  justify-content: center;
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-start {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-start:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.btn-stop {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-stop:hover:not(:disabled) {
+  background-color: #c82333;
+}
+
+.btn-clear {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-clear:hover {
+  background-color: #5a6268;
+}
+
+.chart-container {
+  height: 400px;
+  margin: 30px 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 20px;
+}
+
+.trade-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  margin-top: 20px;
+}
+
+.trade-count {
+  font-weight: bold;
+  color: #495057;
+}
+
+.latest-trade {
+  color: #495057;
 }

@@ -1,7 +1,11 @@
 const express = require("express");
 const cors = require("cors");
+const { createServer } = require("http");
+const StreamServer = require("./stream/stream-server");
+
 const app = express();
 const port = 3000;
+const httpServer = createServer(app);
 
 // Enable CORS for frontend
 app.use(cors());
@@ -131,7 +135,7 @@ app.get("/ingest/daily/:date", async (req, res) => {
   }
 });
 
-// Bulk ingest a year of data
+// Bulk ingest a period of data
 app.get("/ingest/bulk/:startDate/:endDate", async (req, res) => {
   try {
     const { startDate, endDate } = req.params;
@@ -216,7 +220,7 @@ app.get("/ingest/bulk/:startDate/:endDate", async (req, res) => {
   }
 });
 
-// GET endpoint to retrieve market data by symbol (like Python version)
+// GET endpoint to retrieve market data by symbol
 app.get("/market/data/:symbol", async (req, res) => {
   try {
     const { symbol } = req.params;
@@ -249,32 +253,20 @@ app.get("/market/data/:symbol", async (req, res) => {
   }
 });
 
-// Get available parquet files
-app.get("/data/available", async (req, res) => {
-  try {
-    const dates = ParquetOperations.getAvailableDates();
-    const fileInfo = dates.map((date) => ParquetOperations.getFileInfo(date));
-
-    res.json({
-      availableDates: dates,
-      totalFiles: dates.length,
-      files: fileInfo,
-    });
-  } catch (error) {
-    console.error("Error getting available data:", error);
-    res.status(500).json({ error: "Failed to get available data" });
-  }
-});
-
-// Initialize database on startup
+// Initialize database and WebSocket server on startup
 async function startServer() {
   try {
-    await MarketDataOperations.initializeSchema();
-    app.listen(port, () => {
-      console.log(`Example app listening on port ${port}`);
+    // await MarketDataOperations.initializeSchema();
+
+    // Initialize WebSocket stream server
+    const streamServer = new StreamServer(httpServer);
+
+    httpServer.listen(port, () => {
+      console.log(`Server listening on port ${port}`);
+      console.log(`WebSocket server ready for real-time streaming`);
     });
   } catch (error) {
-    console.error("Failed to initialize database:", error);
+    console.error("Failed to initialize server:", error);
     process.exit(1);
   }
 }
