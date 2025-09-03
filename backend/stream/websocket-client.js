@@ -1,7 +1,7 @@
-const WebSocket = require('ws');
+const WebSocket = require("ws");
 
-class AlpacaWebSocketClient {
-  constructor(keyId, secretKey, feed = 'iex', isTest = false) {
+class WebSocketClient {
+  constructor(keyId, secretKey, feed = "iex", isTest = false) {
     this.keyId = keyId;
     this.secretKey = secretKey;
     this.feed = feed;
@@ -12,30 +12,34 @@ class AlpacaWebSocketClient {
   }
 
   connect() {
-    const url = this.isTest 
-      ? 'wss://stream.data.alpaca.markets/v2/test'
+    const url = this.isTest
+      ? "wss://stream.data.alpaca.markets/v2/test"
       : `wss://stream.data.alpaca.markets/v2/${this.feed}`;
     this.ws = new WebSocket(url);
 
-    this.ws.on('open', () => {
-      console.log(`WebSocket connected to Alpaca ${this.isTest ? '(TEST)' : `(${this.feed.toUpperCase()})`}`);
+    this.ws.on("open", () => {
+      console.log(
+        `WebSocket connected ${
+          this.isTest ? "(TEST)" : `(${this.feed.toUpperCase()})`
+        }`
+      );
       this.authenticate();
     });
 
-    this.ws.on('message', (data) => {
+    this.ws.on("message", (data) => {
       try {
         const messages = JSON.parse(data.toString());
         this.handleMessages(Array.isArray(messages) ? messages : [messages]);
       } catch (error) {
-        console.error('Error parsing message:', error);
+        console.error("Error parsing message:", error);
       }
     });
 
-    this.ws.on('error', (error) => {
-      console.error('WebSocket error:', error);
+    this.ws.on("error", (error) => {
+      console.error("WebSocket error:", error);
     });
 
-    this.ws.on('close', (code, reason) => {
+    this.ws.on("close", (code, reason) => {
       console.log(`WebSocket closed: ${code} ${reason}`);
       this.isAuthenticated = false;
     });
@@ -43,60 +47,51 @@ class AlpacaWebSocketClient {
 
   authenticate() {
     const authMessage = {
-      action: 'auth',
+      action: "auth",
       key: this.keyId,
-      secret: this.secretKey
+      secret: this.secretKey,
     };
-    
+
     this.send(authMessage);
   }
 
   handleMessages(messages) {
-    messages.forEach(msg => {
+    messages.forEach((msg) => {
       switch (msg.T) {
-        case 'success':
-          if (msg.msg === 'authenticated') {
-            console.log('Successfully authenticated');
+        case "success":
+          if (msg.msg === "authenticated") {
+            console.log("Successfully authenticated");
             this.isAuthenticated = true;
             this.onAuthenticated();
-          } else if (msg.msg.includes('subscribed')) {
-            console.log('Subscription successful:', msg.msg);
+          } else if (msg.msg.includes("subscribed")) {
+            console.log("Subscription successful:", msg.msg);
           }
           break;
-        case 'error':
-          console.error('Error from server:', msg.msg);
-          break;
-        case 't': // Trade
-          this.onTrade(msg);
-          break;
-        case 'q': // Quote
-          this.onQuote(msg);
-          break;
-        case 'b': // Bar
-          this.onBar(msg);
+        case "error":
+          console.error("Error from server:", msg.msg);
           break;
         default:
-          console.log('Received message:', msg);
+          console.log("Received message:", msg);
       }
     });
   }
 
   subscribe(channels) {
     if (!this.isAuthenticated) {
-      console.error('Cannot subscribe: not authenticated');
+      console.error("Cannot subscribe: not authenticated");
       return;
     }
 
     const subscribeMessage = {
-      action: 'subscribe',
-      ...channels
+      action: "subscribe",
+      ...channels,
     };
 
     this.send(subscribeMessage);
-    
+
     // Track subscriptions
-    Object.keys(channels).forEach(channel => {
-      channels[channel].forEach(symbol => {
+    Object.keys(channels).forEach((channel) => {
+      channels[channel].forEach((symbol) => {
         this.subscriptions.add(`${channel}:${symbol}`);
       });
     });
@@ -104,15 +99,15 @@ class AlpacaWebSocketClient {
 
   unsubscribe(channels) {
     const unsubscribeMessage = {
-      action: 'unsubscribe',
-      ...channels
+      action: "unsubscribe",
+      ...channels,
     };
 
     this.send(unsubscribeMessage);
 
     // Remove from tracked subscriptions
-    Object.keys(channels).forEach(channel => {
-      channels[channel].forEach(symbol => {
+    Object.keys(channels).forEach((channel) => {
+      channels[channel].forEach((symbol) => {
         this.subscriptions.delete(`${channel}:${symbol}`);
       });
     });
@@ -122,7 +117,7 @@ class AlpacaWebSocketClient {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(message));
     } else {
-      console.error('WebSocket is not open');
+      console.error("WebSocket is not open");
     }
   }
 
@@ -136,42 +131,9 @@ class AlpacaWebSocketClient {
   onAuthenticated() {
     // Default: subscribe to AAPL trades and quotes
     this.subscribe({
-      trades: ['AAPL'],
-      quotes: ['AAPL']
-    });
-  }
-
-  onTrade(trade) {
-    console.log('Trade received:', {
-      symbol: trade.S,
-      price: trade.p,
-      size: trade.s,
-      timestamp: new Date(trade.t)
-    });
-  }
-
-  onQuote(quote) {
-    console.log('Quote received:', {
-      symbol: quote.S,
-      bidPrice: quote.bp,
-      bidSize: quote.bs,
-      askPrice: quote.ap,
-      askSize: quote.as,
-      timestamp: new Date(quote.t)
-    });
-  }
-
-  onBar(bar) {
-    console.log('Bar received:', {
-      symbol: bar.S,
-      open: bar.o,
-      high: bar.h,
-      low: bar.l,
-      close: bar.c,
-      volume: bar.v,
-      timestamp: new Date(bar.t)
+      bars: ["AAPL"],
     });
   }
 }
 
-module.exports = AlpacaWebSocketClient;
+module.exports = WebSocketClient;
