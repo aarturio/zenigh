@@ -25,8 +25,8 @@ class StreamServer {
       // Send current streaming status
       socket.emit("streamStatus", { isStreaming: this.isStreaming });
 
-      socket.on("startStream", () => {
-        this.startStream();
+      socket.on("startStream", (data) => {
+        this.startStream(data?.ticker);
       });
 
       socket.on("stopStream", () => {
@@ -40,7 +40,7 @@ class StreamServer {
     });
   }
 
-  startStream() {
+  startStream(ticker) {
     if (this.isStreaming) {
       console.log("Stream already running");
       return;
@@ -59,9 +59,15 @@ class StreamServer {
     // Override methods to relay data to frontend
     this.wsClient.onAuthenticated = () => {
       console.log("API authenticated, subscribing to symbols...");
-      this.wsClient.subscribe({
-        bars: ["FAKEPACA"],
-      });
+      if (ticker) {
+        this.wsClient.subscribe({
+          bars: [ticker],
+        });
+      } else {
+        this.wsClient.subscribe({
+          bars: ["FAKEPACA"],
+        });
+      }
     };
 
     this.wsClient.onBar = (bar) => {

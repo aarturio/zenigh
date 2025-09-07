@@ -70,6 +70,8 @@ class WebSocketClient {
         case "error":
           console.error("Error from server:", msg.msg);
           break;
+        case "b": // Bar
+          this.onBar(msg);
         default:
           console.log("Received message:", msg);
       }

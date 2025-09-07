@@ -1,32 +1,32 @@
 import { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
+  Box,
+  Button,
+  Heading,
+  Field,
+  Input,
+  HStack,
+  Text,
+  VStack,
+  Badge,
+  Container,
+  AbsoluteCenter,
+} from "@chakra-ui/react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
   Tooltip,
-  Legend,
-} from "chart.js";
-import { Line } from "react-chartjs-2";
+  ResponsiveContainer,
+} from "recharts";
 import "./App.css";
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
 
 function App() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [bars, setBars] = useState([]);
-  const [connectionStatus, setConnectionStatus] = useState("disconnected");
+  const [ticker, setTicker] = useState("");
   const socketRef = useRef(null);
   const maxDataPoints = 50;
 
@@ -36,12 +36,10 @@ function App() {
 
     socketRef.current.on("connect", () => {
       console.log("Connected to server");
-      setConnectionStatus("connected");
     });
 
     socketRef.current.on("disconnect", () => {
       console.log("Disconnected from server");
-      setConnectionStatus("disconnected");
     });
 
     socketRef.current.on("streamStatus", (data) => {
@@ -56,6 +54,7 @@ function App() {
           {
             ...bar,
             time: new Date(bar.timestamp).toLocaleTimeString(),
+            price: bar.closePrice, // Recharts prefers simple property names
           },
         ].slice(-maxDataPoints);
         return newBars;
@@ -69,9 +68,10 @@ function App() {
     };
   }, []);
 
-  const startStream = () => {
-    if (socketRef.current) {
-      socketRef.current.emit("startStream");
+  const startStream = (tickerSymbol) => {
+    const symbol = tickerSymbol || ticker;
+    if (socketRef.current && symbol) {
+      socketRef.current.emit("startStream", { ticker: symbol.toUpperCase() });
     }
   };
 
@@ -85,91 +85,143 @@ function App() {
     setBars([]);
   };
 
-  // Prepare chart data
-  const chartData = {
-    labels: bars.map((bar) => bar.time),
-    datasets: [
-      {
-        label: "Bar Price",
-        data: bars.map((bar) => bar.closePrice),
-        borderColor: "rgb(75, 192, 192)",
-        backgroundColor: "rgba(75, 192, 192, 0.2)",
-        tension: 0.1,
-      },
-    ],
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    stopStream();
+    startStream(ticker);
+    setTicker(""); // Clear the input field after submitting
   };
 
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "top",
-      },
-      title: {
-        display: true,
-        text: "Real-Time Stock Bar",
-      },
-    },
-    scales: {
-      x: {
-        display: false, // Hide x-axis labels for cleaner look
-      },
-      y: {
-        beginAtZero: false,
-      },
-    },
-    animation: {
-      duration: 0, // Disable animation for real-time data
-    },
+  // Custom pulsing dot component
+  const PulsingDot = ({ cx, cy }) => (
+    <g>
+      {/* Outer pulsing circle */}
+      <circle cx={cx} cy={cy} r={8} fill="teal" opacity={0.3}>
+        <animate
+          attributeName="r"
+          values="5;15"
+          dur="1s"
+          repeatCount="indefinite"
+        />
+        <animate
+          attributeName="opacity"
+          values="0.5;0.1"
+          dur="1s"
+          repeatCount="indefinite"
+        />
+      </circle>
+      {/* Inner solid dot */}
+      <circle cx={cx} cy={cy} r={4} fill="teal" />
+    </g>
+  );
+
+  // Custom dot component that only shows for the last point
+  const LastPointDot = (props) => {
+    const { payload, index } = props;
+    const isLastPoint = index === bars.length - 1;
+
+    if (isLastPoint) {
+      return <PulsingDot {...props} />;
+    }
+    return null;
   };
+
+  // Data is already in the right format for Recharts
 
   return (
-    <div className="App">
-      <header className="app-header">
-        <h1>Zenigh - Real-Time Market Data</h1>
-        <div className="connection-status">
-          Status:{" "}
-          <span className={`status ${connectionStatus}`}>
-            {connectionStatus}
-          </span>
-        </div>
-      </header>
-
-      <div className="controls">
-        <button
-          onClick={startStream}
-          disabled={isStreaming || connectionStatus !== "connected"}
-          className="btn btn-start"
+    <Container maxW="100vw" p={4} className="app-container">
+      <HStack spacing={4} align="stretch" h="600px">
+        {/* Stock Info Sidebar */}
+        <Box
+          className="stock-info-box"
+          w="300px"
+          h="600px"
+          p={4}
+          bg="white"
+          border="1px solid"
+          borderColor="gray.200"
+          borderRadius="lg"
+          shadow="md"
+          flexShrink={0}
         >
-          {isStreaming ? "Streaming..." : "Start Stream"}
-        </button>
-        <button
-          onClick={stopStream}
-          disabled={!isStreaming}
-          className="btn btn-stop"
+          <VStack spacing={4} align="start" h="100%">
+            <form onSubmit={handleSubmit}>
+              <Field.Root>
+                <Field.Label>Ticker</Field.Label>
+                <Input
+                  placeholder="AAPL,TSLA etc"
+                  color="gray.800"
+                  value={ticker}
+                  onChange={(e) => setTicker(e.target.value)}
+                />
+              </Field.Root>
+            </form>
+            <Text
+              fontSize="lg"
+              fontWeight="bold"
+              color="gray.800"
+              _hover={{ bg: "gray.100" }}
+            >
+              {bars[bars.length - 1]?.symbol}
+            </Text>
+            <Text fontSize="xl" fontWeight="bold" color="teal.600">
+              ${bars[bars.length - 1]?.closePrice}
+            </Text>
+            <Button
+              onClick={stopStream}
+              colorPalette="gray.800"
+              variant="outline"
+              w="100%"
+            >
+              Stop Stream
+            </Button>
+            <Button
+              onClick={clearData}
+              colorPalette="gray.800"
+              variant="outline"
+              w="100%"
+            >
+              Clear Data
+            </Button>
+          </VStack>
+        </Box>
+
+        {/* Chart Container */}
+        <Box
+          className="chart-box"
+          flex="1"
+          h="600px"
+          bg="white"
+          border="1px solid"
+          borderColor="gray.200"
+          borderRadius="lg"
+          shadow="md"
+          p={4}
         >
-          Stop Stream
-        </button>
-        <button onClick={clearData} className="btn btn-clear">
-          Clear Data
-        </button>
-      </div>
-
-      <div className="chart-container">
-        <Line data={chartData} options={chartOptions} />
-      </div>
-
-      <div className="bar-info">
-        <div className="bar-count">Bars: {bars.length}</div>
-        {bars.length > 0 && (
-          <div className="latest-bar">
-            <strong>Latest:</strong> {bars[bars.length - 1].symbol} - $
-            {bars[bars.length - 1].closePrice}({bars[bars.length - 1].time})
-          </div>
-        )}
-      </div>
-    </div>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={bars}
+              margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+            >
+              <XAxis dataKey="time" hide={true} />
+              <YAxis hide={true} domain={["dataMin - 1", "dataMax + 1"]} />
+              <Tooltip
+                labelFormatter={(label) => `Time: ${label}`}
+                formatter={(value) => [`$${value}`, "Price"]}
+              />
+              <Line
+                type="monotone"
+                dataKey="price"
+                stroke="teal"
+                strokeWidth={3}
+                dot={LastPointDot}
+                isAnimationActive={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </Box>
+      </HStack>
+    </Container>
   );
 }
 
