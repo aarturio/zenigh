@@ -1,7 +1,11 @@
-const express = require("express");
-const cors = require("cors");
-const { createServer } = require("http");
-const StreamServer = require("./stream/stream-server");
+import express from "express";
+import cors from "cors";
+import { createServer } from "http";
+import StreamServer from "./stream/stream-server.js";
+// const express = require("express");
+// const cors = require("cors");
+// const { createServer } = require("http");
+// const StreamServer = require("./stream/stream-server");
 
 const app = express();
 const port = 3000;
@@ -10,9 +14,12 @@ const httpServer = createServer(app);
 // Enable CORS for frontend
 app.use(cors());
 
-const marketDataClient = require("./core/market-data-client.js");
-const MarketDataOperations = require("./db/operations.js");
-const ParquetOperations = require("./core/parquet-operations.js");
+// const marketDataClient = require("./core/market-data-client.js");
+// const MarketDataOperations = require("./db/operations.js");
+// const ParquetOperations = require("./core/parquet-operations.js");
+import marketDataClient from "./core/market-data-client.js";
+import MarketDataOperations from "./db/operations.js";
+import ParquetOperations from "./core/parquet-operations.js";
 
 app.get("/", (req, res) => {
   res.json({ message: "Market data API server running" });

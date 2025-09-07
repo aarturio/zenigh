@@ -1,4 +1,5 @@
-const pool = require("./connection");
+// const pool = require("./connection");
+import pool from "./connection.js";
 
 class MarketDataOperations {
   // Initialize database schema
@@ -173,4 +174,5 @@ class MarketDataOperations {
   }
 }
 
-module.exports = MarketDataOperations;
+// module.exports = MarketDataOperations;
+export default MarketDataOperations;

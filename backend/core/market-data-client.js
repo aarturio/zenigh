@@ -1,4 +1,5 @@
-const stocks = require("../stocks.json");
+// const stocks = require("../stocks.json");
+import stocks from "../stocks.json" with { type: "json" };
 
 class MarketDataClient {
   constructor() {
@@ -35,4 +36,5 @@ class MarketDataClient {
 }
 const marketDataClient = new MarketDataClient();
 
-module.exports = marketDataClient;
+// module.exports = marketDataClient;
+export default marketDataClient;
