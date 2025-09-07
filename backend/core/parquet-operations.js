@@ -1,13 +1,9 @@
-// const parquet = require("parquetjs");
-// const fs = require("fs");
-// const path = require("path");
 import fs from "fs";
 import path from "path";
 import parquet from "parquetjs";
 import { fileURLToPath } from "url";
 
 class ParquetOperations {
-  // static DATA_DIR = "./data/parquet_files";
   static DATA_DIR = path.join(
     path.dirname(fileURLToPath(import.meta.url)),
     "../data/parquet_files"
@@ -165,5 +161,4 @@ class ParquetOperations {
   }
 }
 
-// module.exports = ParquetOperations;
 export default ParquetOperations;

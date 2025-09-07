@@ -1,5 +1,3 @@
-// const { Server } = require("socket.io");
-// const WebSocketClient = require("./websocket-client");
 import { Server } from "socket.io";
 import WebSocketClient from "./websocket-client.js";
 
@@ -115,5 +113,4 @@ class StreamServer {
   }
 }
 
-// module.exports = StreamServer;
 export default StreamServer;
