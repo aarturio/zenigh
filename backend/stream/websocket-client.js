@@ -1,4 +1,5 @@
-const WebSocket = require("ws");
+// const WebSocket = require("ws");
+import { WebSocket } from "ws";
 
 class WebSocketClient {
   constructor(keyId, secretKey, feed = "iex", isTest = false) {
@@ -138,4 +139,5 @@ class WebSocketClient {
   }
 }
 
-module.exports = WebSocketClient;
+// module.exports = WebSocketClient;
+export default WebSocketClient;
