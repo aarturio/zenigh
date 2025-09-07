@@ -1,4 +1,3 @@
-// const pool = require("./connection");
 import pool from "./connection.js";
 
 class MarketDataOperations {
@@ -174,5 +173,4 @@ class MarketDataOperations {
   }
 }
 
-// module.exports = MarketDataOperations;
 export default MarketDataOperations;
