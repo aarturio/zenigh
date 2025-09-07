@@ -142,7 +142,7 @@ app.get("/ingest/:startDate/:endDate", async (req, res) => {
 // Initialize database and WebSocket server on startup
 async function startServer() {
   try {
-    await MarketDataOperations.initializeSchema();
+    // await MarketDataOperations.initializeSchema();
 
     // Initialize WebSocket stream server
     const streamServer = new StreamServer(httpServer);
