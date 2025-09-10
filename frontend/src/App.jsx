@@ -40,7 +40,6 @@ function App() {
     });
 
     socketRef.current.on("historicalData", (data) => {
-      console.log("Raw historical data length:", data.length);
       // Transform the data to match your chart format
       const transformedData = data.map((bar, index) => ({
         time: new Date(bar.timestamp).toLocaleTimeString(),
@@ -48,15 +47,10 @@ function App() {
         symbol: bar.symbol,
         closePrice: bar.closePrice,
       }));
-      console.log(
-        "Transformed historical data length:",
-        transformedData.length
-      );
       setBars(transformedData);
     });
 
     socketRef.current.on("bar", (data) => {
-      console.log("Before adding live data, bars length:", prevBars.length);
       const newBar = {
         time: new Date(data.timestamp).toLocaleTimeString(),
         price: data.closePrice,
@@ -65,11 +59,8 @@ function App() {
       };
 
       setBars((prevBars) => {
-        console.log("Before adding live data, bars length:", prevBars.length);
         const updatedBars = [...prevBars, newBar];
-        console.log("After adding live data, bars length:", updatedBars.length);
         const slicedBars = updatedBars.slice(-200);
-        console.log("After slicing to 200, bars length:", slicedBars.length);
         return slicedBars;
       });
     });
