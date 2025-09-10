@@ -3,15 +3,12 @@ import io from "socket.io-client";
 import {
   Box,
   Button,
-  Heading,
   Field,
   Input,
   HStack,
   Text,
   VStack,
-  Badge,
   Container,
-  AbsoluteCenter,
 } from "@chakra-ui/react";
 import {
   LineChart,
@@ -22,13 +19,13 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import "./App.css";
+import LastPointDot from "./components/PulsingDot.jsx";
 
 function App() {
-  const [isStreaming, setIsStreaming] = useState(false);
   const [bars, setBars] = useState([]);
   const [ticker, setTicker] = useState("");
   const socketRef = useRef(null);
-  const maxDataPoints = 50;
+  const maxDataPoints = 200;
 
   useEffect(() => {
     // Connect to WebSocket server
@@ -42,22 +39,38 @@ function App() {
       console.log("Disconnected from server");
     });
 
-    socketRef.current.on("streamStatus", (data) => {
-      setIsStreaming(data.isStreaming);
+    socketRef.current.on("historicalData", (data) => {
+      console.log("Raw historical data length:", data.length);
+      // Transform the data to match your chart format
+      const transformedData = data.map((bar, index) => ({
+        time: new Date(bar.timestamp).toLocaleTimeString(),
+        price: bar.closePrice,
+        symbol: bar.symbol,
+        closePrice: bar.closePrice,
+      }));
+      console.log(
+        "Transformed historical data length:",
+        transformedData.length
+      );
+      setBars(transformedData);
     });
 
-    socketRef.current.on("bar", (bar) => {
-      console.log("Received bar:", bar);
-      setBars((prev) => {
-        const newBars = [
-          ...prev,
-          {
-            ...bar,
-            time: new Date(bar.timestamp).toLocaleTimeString(),
-            price: bar.closePrice, // Recharts prefers simple property names
-          },
-        ].slice(-maxDataPoints);
-        return newBars;
+    socketRef.current.on("bar", (data) => {
+      console.log("Before adding live data, bars length:", prevBars.length);
+      const newBar = {
+        time: new Date(data.timestamp).toLocaleTimeString(),
+        price: data.closePrice,
+        symbol: data.symbol,
+        closePrice: data.closePrice,
+      };
+
+      setBars((prevBars) => {
+        console.log("Before adding live data, bars length:", prevBars.length);
+        const updatedBars = [...prevBars, newBar];
+        console.log("After adding live data, bars length:", updatedBars.length);
+        const slicedBars = updatedBars.slice(-200);
+        console.log("After slicing to 200, bars length:", slicedBars.length);
+        return slicedBars;
       });
     });
 
@@ -92,46 +105,12 @@ function App() {
     setTicker(""); // Clear the input field after submitting
   };
 
-  // Custom pulsing dot component
-  const PulsingDot = ({ cx, cy }) => (
-    <g>
-      {/* Outer pulsing circle */}
-      <circle cx={cx} cy={cy} r={8} fill="teal" opacity={0.3}>
-        <animate
-          attributeName="r"
-          values="5;15"
-          dur="1s"
-          repeatCount="indefinite"
-        />
-        <animate
-          attributeName="opacity"
-          values="0.5;0.1"
-          dur="1s"
-          repeatCount="indefinite"
-        />
-      </circle>
-      {/* Inner solid dot */}
-      <circle cx={cx} cy={cy} r={4} fill="teal" />
-    </g>
-  );
-
-  // Custom dot component that only shows for the last point
-  const LastPointDot = (props) => {
-    const { payload, index } = props;
-    const isLastPoint = index === bars.length - 1;
-
-    if (isLastPoint) {
-      return <PulsingDot {...props} />;
-    }
-    return null;
-  };
-
   // Data is already in the right format for Recharts
 
   return (
     <Container maxW="100vw" p={4} className="app-container">
       <HStack spacing={4} align="stretch" h="600px">
-        {/* Stock Info Sidebar */}
+        {/* Sidebar */}
         <Box
           className="stock-info-box"
           w="300px"
@@ -214,7 +193,9 @@ function App() {
                 dataKey="price"
                 stroke="teal"
                 strokeWidth={3}
-                dot={LastPointDot}
+                dot={(props) => (
+                  <LastPointDot {...props} totalBars={bars.length} />
+                )}
                 isAnimationActive={false}
               />
             </LineChart>

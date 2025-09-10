@@ -3,16 +3,16 @@ import cors from "cors";
 import { createServer } from "http";
 import StreamServer from "./stream/stream-server.js";
 
+import marketDataClient from "./core/market-data-client.js";
+import MarketDataOperations from "./db/operations.js";
+import ParquetOperations from "./core/parquet-operations.js";
+
 const app = express();
 const port = 3000;
 const httpServer = createServer(app);
 
 // Enable CORS for frontend
 app.use(cors());
-
-import marketDataClient from "./core/market-data-client.js";
-import MarketDataOperations from "./db/operations.js";
-import ParquetOperations from "./core/parquet-operations.js";
 
 app.get("/", (req, res) => {
   res.json({ message: "Market data API server running" });
@@ -27,7 +27,7 @@ app.get("/market/data/:symbol", async (req, res) => {
 
     // Get market data from database
     const marketData = await MarketDataOperations.getMarketDataPaginated(
-      symbol.toUpperCase(),
+      "AAPL",
       limit,
       offset
     );
@@ -142,7 +142,7 @@ app.get("/ingest/:startDate/:endDate", async (req, res) => {
 // Initialize database and WebSocket server on startup
 async function startServer() {
   try {
-    // await MarketDataOperations.initializeSchema();
+    await MarketDataOperations.initializeSchema();
 
     // Initialize WebSocket stream server
     const streamServer = new StreamServer(httpServer);
