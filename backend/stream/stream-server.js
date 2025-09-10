@@ -1,5 +1,6 @@
 import { Server } from "socket.io";
 import WebSocketClient from "./websocket-client.js";
+import MarketDataOperations from "../db/operations.js";
 
 class StreamServer {
   constructor(httpServer) {
@@ -40,13 +41,47 @@ class StreamServer {
     });
   }
 
-  startStream(ticker) {
+  async startStream(ticker) {
     if (this.isStreaming) {
       console.log("Stream already running");
       return;
     }
 
     console.log("Starting stream...");
+
+    // Get market data from database
+    const limit = 100; // or however many historical points you want
+    const offset = 0;
+    try {
+      const marketData = await MarketDataOperations.getMarketDataPaginated(
+        "AAPL",
+        limit,
+        offset
+      );
+      const modifiedMarketData = marketData.map((bar) => ({
+        ...bar,
+        symbol: "FAKEPACA",
+      }));
+      // Send historical data to frontend before starting live stream
+      if (modifiedMarketData.length > 0) {
+        // Transform to match the format expected by frontend
+        const historicalBars = modifiedMarketData.map((bar) => ({
+          symbol: bar.symbol,
+          closePrice: bar.close,
+          timestamp: new Date(bar.timestamp).getTime(),
+        }));
+
+        // Send historical data
+        setTimeout(() => {
+          console.log("About to emit historical data...");
+          this.io.emit("historicalData", historicalBars);
+          console.log("Historical data emitted!");
+        }, 100);
+        console.log(`Sent ${historicalBars.length} historical data points`);
+      }
+    } catch (error) {
+      console.error("Error retrieving market data:", error);
+    }
 
     // Use test stream for development
     this.wsClient = new WebSocketClient(
@@ -85,7 +120,7 @@ class StreamServer {
         timestamp: new Date(bar.t).getTime(),
       };
 
-      console.log("Bar received:", bar);
+      // console.log("Bar received:", bar);
 
       this.io.emit("bar", barData);
     };

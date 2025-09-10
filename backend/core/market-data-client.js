@@ -1,4 +1,4 @@
-import stocks from "../stocks.json" with { type: "json" };
+import stocks from "../config/stocks.json" with { type: "json" };
 
 class MarketDataClient {
   constructor() {
@@ -33,6 +33,6 @@ class MarketDataClient {
     }
   }
 }
-const marketDataClient = new MarketDataClient();
 
+const marketDataClient = new MarketDataClient();
 export default marketDataClient;
