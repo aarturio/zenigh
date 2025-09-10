@@ -1,6 +1,6 @@
 services:
-  app:
-    build: .
+  backend:
+    build: ./backend
     ports:
       - "3000:3000"
     environment:
@@ -17,7 +17,6 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
-    command: ["npm", "run", "dev"]
 
   db:
     image: postgres:16
@@ -34,6 +33,18 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/src
+      - /src/node_modules
+    environment:
+      - VITE_BACKEND_URL=http://localhost:3000
+    depends_on:
+      - backend
 
 volumes:
   zenigh_postgres_data:

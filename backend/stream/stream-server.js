@@ -73,11 +73,8 @@ class StreamServer {
 
         // Send historical data
         setTimeout(() => {
-          console.log("About to emit historical data...");
           this.io.emit("historicalData", historicalBars);
-          console.log("Historical data emitted!");
         }, 100);
-        console.log(`Sent ${historicalBars.length} historical data points`);
       }
     } catch (error) {
       console.error("Error retrieving market data:", error);
@@ -119,8 +116,6 @@ class StreamServer {
         closePrice: closePrice,
         timestamp: new Date(bar.t).getTime(),
       };
-
-      // console.log("Bar received:", bar);
 
       this.io.emit("bar", barData);
     };
