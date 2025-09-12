@@ -72,8 +72,8 @@ class WebSocketClient {
           break;
         case "b": // Bar
           this.onBar(msg);
-        default:
-          console.log("Received message:", msg);
+        // default:
+        //   console.log("Received message:", msg);
       }
     });
   }

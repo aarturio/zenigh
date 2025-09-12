@@ -50,22 +50,17 @@ class StreamServer {
     console.log("Starting stream...");
 
     // Get market data from database
-    const limit = 100; // or however many historical points you want
-    const offset = 0;
     try {
-      const marketData = await MarketDataOperations.getMarketDataPaginated(
-        "AAPL",
-        limit,
-        offset
-      );
-      const modifiedMarketData = marketData.map((bar) => ({
-        ...bar,
-        symbol: "FAKEPACA",
-      }));
+      const marketData = await MarketDataOperations.getMarketData(ticker);
+
+      // const modifiedMarketData = marketData.map((bar) => ({
+      //   ...bar,
+      //   symbol: "FAKEPACA",
+      // }));
       // Send historical data to frontend before starting live stream
-      if (modifiedMarketData.length > 0) {
+      if (marketData.length > 0) {
         // Transform to match the format expected by frontend
-        const historicalBars = modifiedMarketData.map((bar) => ({
+        const historicalBars = marketData.map((bar) => ({
           symbol: bar.symbol,
           closePrice: bar.close,
           timestamp: new Date(bar.timestamp).getTime(),
