@@ -5,7 +5,6 @@ import StreamServer from "./stream/stream-server.js";
 
 import marketDataClient from "./core/market-data-client.js";
 import MarketDataOperations from "./db/operations.js";
-import ParquetOperations from "./core/parquet-operations.js";
 
 const app = express();
 const port = 3000;
@@ -22,15 +21,10 @@ app.get("/", (req, res) => {
 app.get("/market/data/:symbol", async (req, res) => {
   try {
     const { symbol } = req.params;
-    const limit = parseInt(req.query.limit) || 100;
-    const offset = parseInt(req.query.offset) || 0;
 
     // Get market data from database
-    const marketData = await MarketDataOperations.getMarketDataPaginated(
-      "AAPL",
-      limit,
-      offset
-    );
+    const marketData = await MarketDataOperations.getMarketData(symbol);
+    console.log(marketData);
 
     if (marketData.length === 0) {
       return res.status(404).json({
@@ -41,8 +35,6 @@ app.get("/market/data/:symbol", async (req, res) => {
     res.json({
       symbol: symbol.toUpperCase(),
       count: marketData.length,
-      limit,
-      offset,
       data: marketData,
     });
   } catch (error) {
@@ -54,88 +46,43 @@ app.get("/market/data/:symbol", async (req, res) => {
 app.get("/ingest/:startDate/:endDate", async (req, res) => {
   try {
     const { startDate, endDate } = req.params;
-    const dates = ParquetOperations.generateDateRange(startDate, endDate);
 
-    let totalRecords = 0;
-    let fromCache = 0;
-    let fromAPI = 0;
+    let bars = {};
 
-    for (const date of dates) {
-      console.log(`Processing ${date}...`);
+    const recursiveIterator = async function (token = null) {
+      const page = await marketDataClient.getBars(startDate, endDate, token);
 
-      if (ParquetOperations.hasDataForDate(date)) {
-        // Load from cache
-        const existingData = await ParquetOperations.loadDailyData(date);
-        await MarketDataOperations.bulkInsertMarketData(existingData);
-        totalRecords += existingData.length;
-        fromCache++;
-        console.log(`${date}: Loaded ${existingData.length} from cache`);
-      } else {
-        // Fetch from API
-        try {
-          const nextDay = new Date(date);
-          nextDay.setDate(nextDay.getDate() + 1);
-
-          let bars = {};
-
-          const recursiveIterator = async function (token = null) {
-            const page = await marketDataClient.getBars(
-              startDate,
-              endDate,
-              token
-            );
-
-            bars = { ...bars, ...page.bars };
-            if (page.next_page_token) {
-              return recursiveIterator(page.next_page_token);
-            }
-            return bars;
-          };
-
-          await recursiveIterator();
-
-          const data = Object.entries(bars).flatMap(([symbol, symbolBars]) =>
-            symbolBars.map((bar) => ({
-              symbol: symbol,
-              timestamp: new Date(bar.t),
-              open: bar.o,
-              high: bar.h,
-              low: bar.l,
-              close: bar.c,
-              volume: bar.v,
-              trade_count: bar.n,
-              vwap: bar.vw,
-            }))
-          );
-
-          if (data.length > 0) {
-            await ParquetOperations.saveDailyData(date, data);
-            await MarketDataOperations.bulkInsertMarketData(data);
-            totalRecords += data.length;
-            fromAPI++;
-            console.log(`${date}: Fetched ${data.length} from API`);
-          }
-        } catch (dateError) {
-          console.error(`Error processing ${date}:`, dateError.message);
-        }
+      bars = { ...bars, ...page.bars };
+      if (page.next_page_token) {
+        return recursiveIterator(page.next_page_token);
       }
+      return bars;
+    };
 
-      // Small delay to avoid rate limiting
-      await new Promise((resolve) => setTimeout(resolve, 100));
+    await recursiveIterator();
+
+    const data = Object.entries(bars).flatMap(([symbol, symbolBars]) =>
+      symbolBars.map((bar) => ({
+        symbol: symbol,
+        timestamp: new Date(bar.t),
+        open: bar.o,
+        high: bar.h,
+        low: bar.l,
+        close: bar.c,
+        volume: bar.v,
+        trade_count: bar.n,
+        vwap: bar.vw,
+      }))
+    );
+
+    if (data.length > 0) {
+      await MarketDataOperations.bulkInsertMarketData(data);
     }
-
     res.json({
-      message: `Test data fetch completed`,
-      dateRange: `${startDate} to ${endDate}`,
-      totalDays: dates.length,
-      totalRecords,
-      fromCache,
-      fromAPI,
-      summary: `${fromCache} days from cache, ${fromAPI} days from API`,
+      message: "Data fetch completed",
     });
   } catch (error) {
-    console.error("Error in /test endpoint:", error);
-    res.status(500).json({ error: "Failed to fetch test data" });
+    console.error(`Error processing:`, error.message);
   }
 });
 

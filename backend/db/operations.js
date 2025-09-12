@@ -32,7 +32,7 @@ class MarketDataOperations {
         "CREATE INDEX IF NOT EXISTS ix_market_data_timestamp ON market_data(timestamp)"
       );
       await client.query(
-        "CREATE INDEX IF NOT EXISTS ix_market_data_symbol_timestamp ON market_data(symbol, timestamp)"
+        "CREATE UNIQUE INDEX IF NOT EXISTS ix_market_data_symbol_timestamp ON market_data(symbol, timestamp)"
       );
 
       console.log("Database schema initialized successfully");
@@ -94,6 +94,7 @@ class MarketDataOperations {
         const query = `
           INSERT INTO market_data (symbol, timestamp, open, high, low, close, volume, trade_count, vwap)
           VALUES ${placeholders}
+          ON CONFLICT (symbol, timestamp) DO NOTHING
         `;
 
         const values = batch.flatMap((data) => [
@@ -130,42 +131,16 @@ class MarketDataOperations {
   }
 
   // Get market data by symbol and date range
-  static async getMarketData(symbol, startDate, endDate, limit = 1000) {
+  static async getMarketData(symbol) {
     const client = await pool.connect();
     try {
       const query = `
         SELECT * FROM market_data
         WHERE symbol = $1 
-        AND timestamp >= $2 
-        AND timestamp <= $3
-        ORDER BY timestamp DESC
-        LIMIT $4
+        ORDER BY timestamp ASC
       `;
 
-      const result = await client.query(query, [
-        symbol,
-        startDate,
-        endDate,
-        limit,
-      ]);
-      return result.rows;
-    } finally {
-      client.release();
-    }
-  }
-
-  // Get market data with pagination (like Python version)
-  static async getMarketDataPaginated(symbol, limit = 100, offset = 0) {
-    const client = await pool.connect();
-    try {
-      const query = `
-        SELECT * FROM market_data
-        WHERE symbol = $1
-        ORDER BY timestamp DESC
-        LIMIT $2 OFFSET $3
-      `;
-
-      const result = await client.query(query, [symbol, limit, offset]);
+      const result = await client.query(query, [symbol]);
       return result.rows;
     } finally {
       client.release();
