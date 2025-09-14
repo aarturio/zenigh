@@ -3,6 +3,7 @@ import io from "socket.io-client";
 import {
   Box,
   Button,
+  ButtonGroup,
   Field,
   Input,
   HStack,
@@ -24,6 +25,7 @@ import LastPointDot from "./components/PulsingDot.jsx";
 function App() {
   const [bars, setBars] = useState([]);
   const [ticker, setTicker] = useState("");
+  const [activeTicker, setActiveTicker] = useState(null);
   const socketRef = useRef(null);
   const maxDataPoints = 200;
 
@@ -72,14 +74,17 @@ function App() {
     };
   }, []);
 
-  const startStream = (tickerSymbol) => {
+  const requestStartStream = (tickerSymbol, timeframe) => {
     const symbol = tickerSymbol || ticker;
     if (socketRef.current && symbol) {
-      socketRef.current.emit("startStream", { ticker: symbol.toUpperCase() });
+      socketRef.current.emit("startStream", {
+        ticker: symbol.toUpperCase(),
+        timeframe: timeframe,
+      });
     }
   };
 
-  const stopStream = () => {
+  const requestStopStream = () => {
     if (socketRef.current) {
       socketRef.current.emit("stopStream");
     }
@@ -91,9 +96,18 @@ function App() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    stopStream();
-    startStream(ticker);
+    requestStopStream();
+    requestStartStream(ticker, "1H");
+    setActiveTicker(ticker.toUpperCase());
     setTicker(""); // Clear the input field after submitting
+  };
+
+  const handleTimeframeChange = (e, timeframe) => {
+    e.preventDefault();
+    if (activeTicker) {
+      requestStopStream();
+      requestStartStream(activeTicker, timeframe);
+    }
   };
 
   // Data is already in the right format for Recharts
@@ -137,8 +151,22 @@ function App() {
             <Text fontSize="xl" fontWeight="bold" color="teal.600">
               ${bars[bars.length - 1]?.closePrice}
             </Text>
+            <ButtonGroup size="xs" variant="outline" colorPalette="gray.800">
+              <Button onClick={(e) => handleTimeframeChange(e, "1T")}>
+                1 Min
+              </Button>
+              <Button onClick={(e) => handleTimeframeChange(e, "5T")}>
+                5 Min
+              </Button>
+              <Button onClick={(e) => handleTimeframeChange(e, "1H")}>
+                1 Hour
+              </Button>
+              <Button onClick={(e) => handleTimeframeChange(e, "1D")}>
+                1 Day
+              </Button>
+            </ButtonGroup>
             <Button
-              onClick={stopStream}
+              onClick={requestStopStream}
               colorPalette="gray.800"
               variant="outline"
               w="100%"
