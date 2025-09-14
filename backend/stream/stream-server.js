@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
 import WebSocketClient from "./websocket-client.js";
 import MarketDataOperations from "../db/operations.js";
+import { TABLE_MAP } from "../config.js";
 
 class StreamServer {
   constructor(httpServer) {
@@ -27,7 +28,7 @@ class StreamServer {
       socket.emit("streamStatus", { isStreaming: this.isStreaming });
 
       socket.on("startStream", (data) => {
-        this.startStream(data?.ticker);
+        this.startStream(data?.ticker, data?.timeframe);
       });
 
       socket.on("stopStream", () => {
@@ -41,17 +42,23 @@ class StreamServer {
     });
   }
 
-  async startStream(ticker) {
+  async startStream(ticker, timeframe) {
     if (this.isStreaming) {
       console.log("Stream already running");
       return;
     }
 
     console.log("Starting stream...");
+    console.log(timeframe);
+    let tableName = TABLE_MAP[timeframe];
+    console.log("Using table:", tableName);
 
     // Get market data from database
     try {
-      const marketData = await MarketDataOperations.getMarketData(ticker);
+      const marketData = await MarketDataOperations.getMarketData(
+        ticker,
+        tableName
+      );
 
       // const modifiedMarketData = marketData.map((bar) => ({
       //   ...bar,
