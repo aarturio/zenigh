@@ -1,4 +1,18 @@
 import pool from "./connection.js";
+import { z } from "zod";
+import { TABLE_MAP } from "../config.js";
+
+const MarketDataSchema = z.object({
+  symbol: z.string().min(1),
+  timestamp: z.union([z.string().datetime(), z.date()]),
+  open: z.number().positive(),
+  high: z.number().positive(),
+  low: z.number().positive(),
+  close: z.number().positive(),
+  volume: z.number().int().nonnegative(),
+  trade_count: z.number().int().optional(),
+  vwap: z.number().optional(),
+});
 
 class MarketDataOperations {
   // Initialize database schema
@@ -9,31 +23,33 @@ class MarketDataOperations {
       await client.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
 
       // Create table if not exists
-      await client.query(`
-        CREATE TABLE IF NOT EXISTS market_data (
-          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-          symbol VARCHAR NOT NULL,
-          timestamp TIMESTAMPTZ NOT NULL,
-          open DOUBLE PRECISION NOT NULL,
-          high DOUBLE PRECISION NOT NULL,
-          low DOUBLE PRECISION NOT NULL,
-          close DOUBLE PRECISION NOT NULL,
-          volume BIGINT NOT NULL,
-          trade_count INTEGER,
-          vwap DOUBLE PRECISION
-        )
-      `);
 
-      // Create indexes
-      await client.query(
-        "CREATE INDEX IF NOT EXISTS ix_market_data_symbol ON market_data(symbol)"
-      );
-      await client.query(
-        "CREATE INDEX IF NOT EXISTS ix_market_data_timestamp ON market_data(timestamp)"
-      );
-      await client.query(
-        "CREATE UNIQUE INDEX IF NOT EXISTS ix_market_data_symbol_timestamp ON market_data(symbol, timestamp)"
-      );
+      for (const tableName of Object.values(TABLE_MAP)) {
+        await client.query(`
+          CREATE TABLE IF NOT EXISTS ${tableName} (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            symbol VARCHAR NOT NULL,
+            timestamp TIMESTAMPTZ NOT NULL,
+            open DOUBLE PRECISION NOT NULL,
+            high DOUBLE PRECISION NOT NULL,
+            low DOUBLE PRECISION NOT NULL,
+            close DOUBLE PRECISION NOT NULL,
+            volume BIGINT NOT NULL,
+            trade_count INTEGER,
+            vwap NUMERIC(18,8)
+          )
+        `);
+        // Create indexes
+        await client.query(
+          `CREATE INDEX IF NOT EXISTS ix_${tableName}_symbol ON ${tableName}(symbol)`
+        );
+        await client.query(
+          `CREATE INDEX IF NOT EXISTS ix_${tableName}_timestamp ON ${tableName}(timestamp)`
+        );
+        await client.query(
+          `CREATE UNIQUE INDEX IF NOT EXISTS ix_${tableName}_symbol_timestamp ON ${tableName}(symbol, timestamp)`
+        );
+      }
 
       console.log("Database schema initialized successfully");
     } finally {
@@ -41,38 +57,18 @@ class MarketDataOperations {
     }
   }
 
-  // Insert single market data record
-  static async insertMarketData(data) {
-    const client = await pool.connect();
-    try {
-      const query = `
-        INSERT INTO market_data (symbol, timestamp, open, high, low, close, volume, trade_count, vwap)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        RETURNING id
-      `;
-      const values = [
-        data.symbol,
-        data.timestamp,
-        data.open,
-        data.high,
-        data.low,
-        data.close,
-        data.volume,
-        data.trade_count,
-        data.vwap,
-      ];
-
-      const result = await client.query(query, values);
-      return result.rows[0];
-    } finally {
-      client.release();
-    }
-  }
-
   // Bulk insert market data with batching (handles large datasets)
-  static async bulkInsertMarketData(dataArray) {
+  static async bulkInsertMarketData(dataArray, tableName) {
+    // Validate table name
+    const tableNameSchema = z.enum(Object.values(TABLE_MAP));
+    tableNameSchema.parse(tableName);
+
+    // Validate data array
+    const dataArraySchema = z.array(MarketDataSchema).min(1);
+    dataArraySchema.parse(dataArray);
+
     const client = await pool.connect();
-    const BATCH_SIZE = 5000; // Process 1000 records at a time
+    const BATCH_SIZE = 5000;
     let totalInserted = 0;
 
     try {
@@ -92,7 +88,7 @@ class MarketDataOperations {
           .join(", ");
 
         const query = `
-          INSERT INTO market_data (symbol, timestamp, open, high, low, close, volume, trade_count, vwap)
+          INSERT INTO ${tableName} (symbol, timestamp, open, high, low, close, volume, trade_count, vwap)
           VALUES ${placeholders}
           ON CONFLICT (symbol, timestamp) DO NOTHING
         `;
@@ -131,11 +127,11 @@ class MarketDataOperations {
   }
 
   // Get market data by symbol and date range
-  static async getMarketData(symbol) {
+  static async getMarketData(symbol, tableName) {
     const client = await pool.connect();
     try {
       const query = `
-        SELECT * FROM market_data
+        SELECT * FROM ${tableName}
         WHERE symbol = $1 
         ORDER BY timestamp ASC
       `;

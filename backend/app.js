@@ -5,6 +5,7 @@ import StreamServer from "./stream/stream-server.js";
 
 import marketDataClient from "./core/market-data-client.js";
 import MarketDataOperations from "./db/operations.js";
+import { TABLE_MAP } from "./config.js";
 
 const app = express();
 const port = 3000;
@@ -18,13 +19,16 @@ app.get("/", (req, res) => {
 });
 
 // GET endpoint to retrieve market data by symbol
-app.get("/market/data/:symbol", async (req, res) => {
+app.get("/market/data/:symbol/:timeframe", async (req, res) => {
   try {
-    const { symbol } = req.params;
+    const { symbol, timeframe } = req.params;
+    let tableName = TABLE_MAP[timeframe];
 
     // Get market data from database
-    const marketData = await MarketDataOperations.getMarketData(symbol);
-    console.log(marketData);
+    const marketData = await MarketDataOperations.getMarketData(
+      symbol,
+      tableName
+    );
 
     if (marketData.length === 0) {
       return res.status(404).json({
@@ -43,14 +47,20 @@ app.get("/market/data/:symbol", async (req, res) => {
   }
 });
 
-app.get("/ingest/:startDate/:endDate", async (req, res) => {
+app.get("/ingest/:startDate/:endDate/:timeframe", async (req, res) => {
   try {
-    const { startDate, endDate } = req.params;
+    const { startDate, endDate, timeframe } = req.params;
 
     let bars = {};
+    let tableName = TABLE_MAP[timeframe];
 
     const recursiveIterator = async function (token = null) {
-      const page = await marketDataClient.getBars(startDate, endDate, token);
+      const page = await marketDataClient.getBars(
+        startDate,
+        endDate,
+        timeframe,
+        token
+      );
 
       bars = { ...bars, ...page.bars };
       if (page.next_page_token) {
@@ -76,7 +86,8 @@ app.get("/ingest/:startDate/:endDate", async (req, res) => {
     );
 
     if (data.length > 0) {
-      await MarketDataOperations.bulkInsertMarketData(data);
+      console.log(`Inserting ${data.length} records into ${tableName}`);
+      await MarketDataOperations.bulkInsertMarketData(data, tableName);
     }
     res.json({
       message: "Data fetch completed",
@@ -96,7 +107,6 @@ async function startServer() {
 
     httpServer.listen(port, () => {
       console.log(`Server listening on port ${port}`);
-      console.log(`WebSocket server ready for real-time streaming`);
     });
   } catch (error) {
     console.error("Failed to initialize server:", error);
