@@ -3,7 +3,7 @@ import cors from "cors";
 import { createServer } from "http";
 import StreamServer from "./stream/stream-server.js";
 
-import marketDataClient from "./core/market-data-client.js";
+import coreDataClient from "./core/core-data-client.js";
 import MarketDataOperations from "./db/operations.js";
 import { TABLE_MAP } from "./config.js";
 
@@ -47,52 +47,45 @@ app.get("/market/data/:symbol/:timeframe", async (req, res) => {
   }
 });
 
-app.get("/ingest/:startDate/:endDate/:timeframe", async (req, res) => {
+app.get("/ingest/:startDate/:endDate", async (req, res) => {
   try {
-    const { startDate, endDate, timeframe } = req.params;
+    const { startDate, endDate } = req.params;
 
-    let bars = {};
-    let tableName = TABLE_MAP[timeframe];
+    for (const tf in TABLE_MAP) {
+      let tableName = TABLE_MAP[tf];
+      let data = await coreDataClient.getData(startDate, endDate, tf);
 
-    const recursiveIterator = async function (token = null) {
-      const page = await marketDataClient.getBars(
-        startDate,
-        endDate,
-        timeframe,
-        token
+      const formattedData = Object.entries(data).flatMap(
+        ([symbol, symbolBars]) =>
+          symbolBars.map((bar) => ({
+            symbol: symbol,
+            timestamp: new Date(bar.t),
+            open: bar.o,
+            high: bar.h,
+            low: bar.l,
+            close: bar.c,
+            volume: bar.v,
+            trade_count: bar.n,
+            vwap: bar.vw,
+          }))
       );
 
-      bars = { ...bars, ...page.bars };
-      if (page.next_page_token) {
-        return recursiveIterator(page.next_page_token);
+      if (formattedData.length > 0) {
+        console.log(
+          `Inserting ${formattedData.length} records into ${tableName}`
+        );
+        await MarketDataOperations.bulkInsertMarketData(
+          formattedData,
+          tableName
+        );
       }
-      return bars;
-    };
-
-    await recursiveIterator();
-
-    const data = Object.entries(bars).flatMap(([symbol, symbolBars]) =>
-      symbolBars.map((bar) => ({
-        symbol: symbol,
-        timestamp: new Date(bar.t),
-        open: bar.o,
-        high: bar.h,
-        low: bar.l,
-        close: bar.c,
-        volume: bar.v,
-        trade_count: bar.n,
-        vwap: bar.vw,
-      }))
-    );
-
-    if (data.length > 0) {
-      console.log(`Inserting ${data.length} records into ${tableName}`);
-      await MarketDataOperations.bulkInsertMarketData(data, tableName);
     }
+
     res.json({
       message: "Data fetch completed",
     });
   } catch (error) {
+    res.status(500).json({ error: error.message });
     console.error(`Error processing:`, error.message);
   }
 });
