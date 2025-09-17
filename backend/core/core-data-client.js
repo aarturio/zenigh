@@ -1,6 +1,6 @@
 import { TICKERS } from "../config.js";
 
-class MarketDataClient {
+class CoreDataClient {
   constructor() {
     this.keyId = process.env.ALPACA_API_KEY;
     this.secretKey = process.env.ALPACA_SECRET_KEY;
@@ -32,7 +32,32 @@ class MarketDataClient {
       throw error;
     }
   }
+  async recursiveIterator(
+    prevBars,
+    startDate,
+    endDate,
+    timeframe,
+    token = null
+  ) {
+    const page = await this.getBars(startDate, endDate, timeframe, token);
+
+    const mergedBars = { ...prevBars, ...page.bars };
+    if (page.next_page_token) {
+      return this.recursiveIterator(
+        mergedBars,
+        startDate,
+        endDate,
+        timeframe,
+        page.next_page_token
+      );
+    }
+    return mergedBars;
+  }
+
+  async getData(startDate, endDate, timeframe) {
+    return await this.recursiveIterator({}, startDate, endDate, timeframe);
+  }
 }
 
-const marketDataClient = new MarketDataClient();
-export default marketDataClient;
+const coreDataClient = new CoreDataClient();
+export default coreDataClient;
