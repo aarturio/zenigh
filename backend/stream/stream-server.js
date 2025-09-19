@@ -1,6 +1,6 @@
 import { Server } from "socket.io";
 import WebSocketClient from "./websocket-client.js";
-import MarketDataOperations from "../db/operations.js";
+import DatabaseOperations from "../db/db-operations.js";
 import { TABLE_MAP } from "../config.js";
 
 class StreamServer {
@@ -55,7 +55,7 @@ class StreamServer {
 
     // Get market data from database
     try {
-      const marketData = await MarketDataOperations.getMarketData(
+      const marketData = await DatabaseOperations.getMarketData(
         ticker,
         tableName
       );

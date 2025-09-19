@@ -14,7 +14,7 @@ const MarketDataSchema = z.object({
   vwap: z.number().optional(),
 });
 
-class MarketDataOperations {
+class DatabaseOperations {
   // Initialize database schema
   static async initializeSchema() {
     const client = await pool.connect();
@@ -23,6 +23,24 @@ class MarketDataOperations {
       await client.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
 
       // Create table if not exists
+
+      // Create users table
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS users (
+          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+          email VARCHAR(255) UNIQUE NOT NULL,
+          password_hash VARCHAR(255) NOT NULL,
+          first_name VARCHAR(100),
+          last_name VARCHAR(100),
+          created_at TIMESTAMPTZ DEFAULT NOW(),
+          updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+      `);
+
+      // Create users table index
+      await client.query(
+        `CREATE INDEX IF NOT EXISTS ix_users_email ON users(email)`
+      );
 
       for (const tableName of Object.values(TABLE_MAP)) {
         await client.query(`
@@ -144,4 +162,4 @@ class MarketDataOperations {
   }
 }
 
-export default MarketDataOperations;
+export default DatabaseOperations;

@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
-import { Box, HStack, Container } from "@chakra-ui/react";
+import { Box, HStack, Container, VStack } from "@chakra-ui/react";
 import "./App.css";
 import Chart from "./components/Chart.jsx";
 import PriceCard from "./components/PriceCard.jsx";
 import TimeframeButtons from "./components/TimeframeButtons.jsx";
 import Sidebar from "./components/Sidebar.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import Navbar from "./components/Navbar.jsx";
 
 function App() {
   const [bars, setBars] = useState([]);
@@ -103,34 +105,39 @@ function App() {
   // Data is already in the right format for Recharts
 
   return (
-    <Container maxW="100vw" p={4} className="app-container">
-      <HStack spacing={4} align="stretch" h="600px">
-        {/* Sidebar */}
-        <Sidebar
-          ticker={ticker}
-          setTicker={setTicker}
-          onSubmit={handleSubmit}
-        />
+    <ProtectedRoute>
+      <VStack spacing={0} minH="100vh">
+        <Navbar />
+        <Container maxW="100vw" p={4} className="app-container">
+          <HStack spacing={4} align="stretch" h="600px">
+            {/* Sidebar */}
+            <Sidebar
+              ticker={ticker}
+              setTicker={setTicker}
+              onSubmit={handleSubmit}
+            />
 
-        {/* Chart Container */}
-        <Box
-          className="card"
-          flex="1"
-          h="600px"
-          p={4}
-          display="flex"
-          flexDirection="column"
-        >
-          <PriceCard bars={bars} hoveredPrice={hoveredPrice} />
-          <Box flex="1" minH="0">
-            <Chart bars={bars} onHover={setHoveredPrice} />
-          </Box>
-          <Box display="flex" justifyContent="center" mt={4}>
-            <TimeframeButtons onTimeframeChange={handleTimeframeChange} />
-          </Box>
-        </Box>
-      </HStack>
-    </Container>
+            {/* Chart Container */}
+            <Box
+              className="card"
+              flex="1"
+              h="600px"
+              p={4}
+              display="flex"
+              flexDirection="column"
+            >
+              <PriceCard bars={bars} hoveredPrice={hoveredPrice} />
+              <Box flex="1" minH="0">
+                <Chart bars={bars} onHover={setHoveredPrice} />
+              </Box>
+              <Box display="flex" justifyContent="center" mt={4}>
+                <TimeframeButtons onTimeframeChange={handleTimeframeChange} />
+              </Box>
+            </Box>
+          </HStack>
+        </Container>
+      </VStack>
+    </ProtectedRoute>
   );
 }
 
