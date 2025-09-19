@@ -13,6 +13,7 @@
     "@chakra-ui/charts": "^3.26.0",
     "@chakra-ui/react": "^3.26.0",
     "@emotion/react": "^11.14.0",
+    "axios": "^1.12.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "recharts": "^3.1.2",
