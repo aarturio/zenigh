@@ -56,11 +56,11 @@ function App() {
       // Transform the data to match your chart format
       const transformedData = data.map((bar) => ({
         time: new Date(bar.timestamp).toLocaleString([], {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
         }),
         symbol: bar.symbol,
         closePrice: bar.closePrice,
@@ -71,11 +71,11 @@ function App() {
     socketRef.current.on("bar", (data) => {
       const newBar = {
         time: new Date(data.timestamp).toLocaleString([], {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
         }),
         symbol: data.symbol,
         closePrice: data.closePrice,
@@ -106,37 +106,35 @@ function App() {
 
   return (
     <ProtectedRoute>
-      <VStack spacing={0} minH="100vh">
-        <Navbar />
-        <Container maxW="100vw" p={4} className="app-container">
-          <HStack spacing={4} align="stretch" h="600px">
-            {/* Sidebar */}
-            <Sidebar
-              ticker={ticker}
-              setTicker={setTicker}
-              onSubmit={handleSubmit}
-            />
+      <Navbar />
+      <Container maxW="100vw" p={4} className="app-container">
+        <HStack spacing={4} align="stretch" h="600px">
+          {/* Sidebar */}
+          <Sidebar
+            ticker={ticker}
+            setTicker={setTicker}
+            onSubmit={handleSubmit}
+          />
 
-            {/* Chart Container */}
-            <Box
-              className="card"
-              flex="1"
-              h="600px"
-              p={4}
-              display="flex"
-              flexDirection="column"
-            >
-              <PriceCard bars={bars} hoveredPrice={hoveredPrice} />
-              <Box flex="1" minH="0">
-                <Chart bars={bars} onHover={setHoveredPrice} />
-              </Box>
-              <Box display="flex" justifyContent="center" mt={4}>
-                <TimeframeButtons onTimeframeChange={handleTimeframeChange} />
-              </Box>
+          {/* Chart Container */}
+          <Box
+            className="card"
+            flex="1"
+            h="600px"
+            p={4}
+            display="flex"
+            flexDirection="column"
+          >
+            <PriceCard bars={bars} hoveredPrice={hoveredPrice} />
+            <Box flex="1" minH="0">
+              <Chart bars={bars} onHover={setHoveredPrice} />
             </Box>
-          </HStack>
-        </Container>
-      </VStack>
+            <Box display="flex" justifyContent="center" mt={4}>
+              <TimeframeButtons onTimeframeChange={handleTimeframeChange} />
+            </Box>
+          </Box>
+        </HStack>
+      </Container>
     </ProtectedRoute>
   );
 }
