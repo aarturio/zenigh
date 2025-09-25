@@ -3,38 +3,38 @@ import UserOperations from "../db/user-operations.js";
 // Middleware to verify JWT token
 export const authenticateToken = async (req, res, next) => {
   try {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN
 
     if (!token) {
-      return res.status(401).json({ error: 'Access token required' });
+      return res.status(401).json({ error: "Access token required" });
     }
 
     // Verify token
     const decoded = UserOperations.verifyJWT(token);
     if (!decoded) {
-      return res.status(403).json({ error: 'Invalid or expired token' });
+      return res.status(403).json({ error: "Invalid or expired token" });
     }
 
     // Get user details and attach to request
     const user = await UserOperations.getUserById(decoded.userId);
     if (!user) {
-      return res.status(403).json({ error: 'User not found' });
+      return res.status(403).json({ error: "User not found" });
     }
 
     req.user = user;
     next();
   } catch (error) {
-    console.error('Authentication error:', error);
-    return res.status(500).json({ error: 'Authentication failed' });
+    console.error("Authentication error:", error);
+    return res.status(500).json({ error: "Authentication failed" });
   }
 };
 
 // Optional middleware - adds user to request if token exists but doesn't require it
 export const optionalAuth = async (req, res, next) => {
   try {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
 
     if (token) {
       const decoded = UserOperations.verifyJWT(token);
@@ -48,6 +48,7 @@ export const optionalAuth = async (req, res, next) => {
 
     next();
   } catch (error) {
+    console.error("Authentication error:", error);
     // Ignore auth errors for optional auth
     next();
   }

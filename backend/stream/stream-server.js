@@ -50,7 +50,7 @@ class StreamServer {
 
     console.log("Starting stream...");
     console.log(timeframe);
-    let tableName = TABLE_MAP[timeframe];
+    const tableName = TABLE_MAP[timeframe];
     console.log("Using table:", tableName);
 
     // Get market data from database

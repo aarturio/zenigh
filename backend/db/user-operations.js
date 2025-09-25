@@ -36,6 +36,7 @@ class UserOperations {
     try {
       return jwt.verify(token, secret);
     } catch (error) {
+      console.error("JWT verification error:", error);
       return null;
     }
   }

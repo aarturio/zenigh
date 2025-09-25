@@ -9,9 +9,9 @@ class CoreDataClient {
   }
 
   async getBars(start, end, timeframe, page_token = null) {
-    let baseUrl = `https://data.alpaca.markets/v2/stocks/bars?symbols=${this.symbols}&timeframe=${timeframe}&start=${start}&end=${end}&limit=10000&adjustment=raw&feed=${this.feed}&sort=asc`;
+    const baseUrl = `https://data.alpaca.markets/v2/stocks/bars?symbols=${this.symbols}&timeframe=${timeframe}&start=${start}&end=${end}&limit=10000&adjustment=raw&feed=${this.feed}&sort=asc`;
 
-    let url = page_token ? baseUrl + `&page_token=${page_token}` : baseUrl;
+    const url = page_token ? baseUrl + `&page_token=${page_token}` : baseUrl;
 
     try {
       const response = await fetch(url, {
