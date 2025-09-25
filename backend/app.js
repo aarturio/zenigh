@@ -64,7 +64,7 @@ app.get("/auth/me", authenticateToken, async (req, res) => {
 app.get("/market/data/:symbol/:timeframe", async (req, res) => {
   try {
     const { symbol, timeframe } = req.params;
-    let tableName = TABLE_MAP[timeframe];
+    const tableName = TABLE_MAP[timeframe];
 
     // Get market data from database
     const marketData = await DatabaseOperations.getMarketData(
@@ -94,8 +94,8 @@ app.get("/ingest/:startDate/:endDate", async (req, res) => {
     const { startDate, endDate } = req.params;
 
     for (const tf in TABLE_MAP) {
-      let tableName = TABLE_MAP[tf];
-      let data = await coreDataClient.getData(startDate, endDate, tf);
+      const tableName = TABLE_MAP[tf];
+      const data = await coreDataClient.getData(startDate, endDate, tf);
 
       const formattedData = Object.entries(data).flatMap(
         ([symbol, symbolBars]) =>
@@ -135,7 +135,7 @@ async function startServer() {
     await DatabaseOperations.initializeSchema();
 
     // Initialize WebSocket stream server
-    const streamServer = new StreamServer(httpServer);
+    new StreamServer(httpServer);
 
     httpServer.listen(port, () => {
       console.log(`Server listening on port ${port}`);
