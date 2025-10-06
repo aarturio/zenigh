@@ -42,7 +42,8 @@ function App() {
 
   useEffect(() => {
     // Connect to WebSocket server
-    socketRef.current = io("http://localhost:3000");
+    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+    socketRef.current = io(BACKEND_URL);
 
     socketRef.current.on("connect", () => {
       console.log("Connected to server");
