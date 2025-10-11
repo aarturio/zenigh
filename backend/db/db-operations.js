@@ -65,39 +65,33 @@ class DatabaseOperations {
     const BATCH_SIZE = 5000;
     let totalInserted = 0;
 
-    try {
-      await db.transaction(async (trx) => {
-        // Process data in batches
-        for (let i = 0; i < dataArray.length; i += BATCH_SIZE) {
-          const batch = dataArray.slice(i, i + BATCH_SIZE);
+    await db.transaction(async (trx) => {
+      // Process data in batches
+      for (let i = 0; i < dataArray.length; i += BATCH_SIZE) {
+        const batch = dataArray.slice(i, i + BATCH_SIZE);
 
-          await trx(tableName)
-            .insert(batch)
-            .onConflict(["symbol", "timestamp"])
-            .ignore();
+        await trx(tableName)
+          .insert(batch)
+          .onConflict(["symbol", "timestamp"])
+          .ignore();
 
-          totalInserted += batch.length;
-          console.log(
-            `Inserted batch: ${batch.length} records (${totalInserted}/${dataArray.length} total)`
-          );
-        }
-      });
+        totalInserted += batch.length;
+        console.log(
+          `Inserted batch: ${batch.length} records (${totalInserted}/${dataArray.length} total)`
+        );
+      }
+    });
 
-      console.log(
-        `Bulk inserted ${totalInserted} records in ${Math.ceil(
-          dataArray.length / BATCH_SIZE
-        )} batches`
-      );
-    } catch (error) {
-      throw error;
-    }
+    console.log(
+      `Bulk inserted ${totalInserted} records in ${Math.ceil(
+        dataArray.length / BATCH_SIZE
+      )} batches`
+    );
   }
 
   // Get market data by symbol and date range
   static async getMarketData(symbol, tableName) {
-    return await db(tableName)
-      .where({ symbol })
-      .orderBy("timestamp", "asc");
+    return await db(tableName).where({ symbol }).orderBy("timestamp", "asc");
   }
 }
 
