@@ -1,34 +1,41 @@
+# Load environment variables from .env file
+include .env
+export
+
 .PHONY: help build start down logs clean install backend frontend restart
 
 help: ## Show this help message
-	@echo 'Usage: make [target]'
+	@echo 'Usage: make [arg]'
 	@echo ''
-	@echo 'Targets:'
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-install: ## Install dependencies
+install-dev: ## Install dependencies
 	cd backend && npm install
 
-backend: ## Start backend development server locally
-	cd backend && npm run dev
-
-frontend: ## Start frontend development server
-	cd frontend && npm run dev
-
-build: ## Build Docker images
-	docker-compose build
-
-start: ## Start Docker services with build
+start-dev: ## Start Docker services with build
 	docker-compose up --build
 
-stop: ## Stop Docker services
+stop-dev: ## Stop Docker services
 	docker-compose down
 
-logs: ## Show Docker logs
+logs-dev: ## Show Docker logs
 	docker-compose logs -f
+
+build-prod: ## EC2 Build and start containers in background
+	docker-compose -f docker-compose.prod.yml up -d --build
+
+logs-prod: ## EC2 View logs
+	docker-compose -f docker-compose.prod.yml logs -f
 
 clean: ## Stop services and remove volumes
 	docker-compose down --volumes
 	docker system prune --volumes -f
 
-restart: down start ## Restart Docker services
+start-instance: ## Start EC2 instance
+	aws ec2 start-instances --instance-ids $(EC2_INSTANCE_ID)
+
+stop-instance: ## Stop EC2 instance
+	aws ec2 stop-instances --instance-ids $(EC2_INSTANCE_ID)
+
+ssh-connect: ## Connect to EC2 instance
+	ssh -i zenigh-key.pem ubuntu@$(EC2_INSTANCE_PUBLIC_IP)
