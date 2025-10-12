@@ -11,7 +11,8 @@
     "dev": "nodemon app.js",
     "test": "vitest",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "seed": "node db/seed.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

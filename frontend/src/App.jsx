@@ -66,7 +66,8 @@ function App() {
         symbol: bar.symbol,
         closePrice: bar.closePrice,
       }));
-      setBars(transformedData);
+      // Keep only last 30 data points
+      setBars(transformedData.slice(-30));
     });
 
     socketRef.current.on("bar", (data) => {
@@ -84,7 +85,8 @@ function App() {
 
       setBars((prevBars) => {
         const updatedBars = [...prevBars, newBar];
-        return updatedBars;
+        // Keep only last 30 data points
+        return updatedBars.slice(-30);
       });
     });
 
