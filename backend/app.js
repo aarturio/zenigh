@@ -6,6 +6,7 @@ import StreamServer from "./stream/stream-server.js";
 import coreDataClient from "./core/core-data-client.js";
 import DatabaseOperations from "./db/db-operations.js";
 import UserOperations from "./db/user-operations.js";
+import seedDefaultUser from "./db/seed.js";
 import { authenticateToken } from "./middleware/auth.js";
 import { TABLE_MAP } from "./config.js";
 
@@ -133,6 +134,9 @@ app.get("/ingest/:startDate/:endDate", async (req, res) => {
 async function startServer() {
   try {
     await DatabaseOperations.initializeSchema();
+
+    // Seed default user for development
+    await seedDefaultUser();
 
     // Initialize WebSocket stream server
     new StreamServer(httpServer);
