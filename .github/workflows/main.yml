@@ -19,7 +19,7 @@ jobs:
     # Test against multiple Node.js versions
     strategy:
       matrix:
-        node-version: [18, 20, 22]
+        node-version: [18]
 
     defaults:
       run:

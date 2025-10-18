@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, vi } from "vitest";
 
 // Mock the database connection
-vi.mock("../../../db/connection.js", () => {
+vi.mock("../../db/connection.js", () => {
   const mockQueryBuilder = {
     where: vi.fn().mockReturnThis(),
     orderBy: vi.fn(),
@@ -19,8 +19,8 @@ vi.mock("../../../db/connection.js", () => {
   };
 });
 
-import DatabaseOperations from "../../../db/db-operations.js";
-import db from "../../../db/connection.js";
+import DatabaseOperations from "../../db/db-operations.js";
+import db from "../../db/connection.js";
 
 describe("DatabaseOperations - getMarketData", () => {
   let mockQueryBuilder;
@@ -89,8 +89,24 @@ describe("DatabaseOperations - bulkInsertMarketData", () => {
   test("should insert small batch of data", async () => {
     // Arrange: Small dataset (under batch size)
     const data = [
-      { symbol: "AAPL", timestamp: "2024-01-01", close: 150, open: 148, high: 151, low: 147, volume: 1000 },
-      { symbol: "AAPL", timestamp: "2024-01-02", close: 152, open: 150, high: 153, low: 149, volume: 1200 },
+      {
+        symbol: "AAPL",
+        timestamp: "2024-01-01",
+        close: 150,
+        open: 148,
+        high: 151,
+        low: 147,
+        volume: 1000,
+      },
+      {
+        symbol: "AAPL",
+        timestamp: "2024-01-02",
+        close: 152,
+        open: 150,
+        high: 153,
+        low: 149,
+        volume: 1200,
+      },
     ];
     const tableName = "market_data_1d";
 
@@ -102,7 +118,10 @@ describe("DatabaseOperations - bulkInsertMarketData", () => {
 
     // Assert: Check that insert was called correctly
     expect(mockQueryBuilder.insert).toHaveBeenCalledWith(data);
-    expect(mockQueryBuilder.onConflict).toHaveBeenCalledWith(["symbol", "timestamp"]);
+    expect(mockQueryBuilder.onConflict).toHaveBeenCalledWith([
+      "symbol",
+      "timestamp",
+    ]);
     expect(mockQueryBuilder.ignore).toHaveBeenCalled();
   });
 
@@ -121,7 +140,15 @@ describe("DatabaseOperations - bulkInsertMarketData", () => {
   test("should use transaction for data insert", async () => {
     // Arrange
     const data = [
-      { symbol: "TSLA", timestamp: "2024-01-01", close: 250, open: 248, high: 252, low: 247, volume: 5000 },
+      {
+        symbol: "TSLA",
+        timestamp: "2024-01-01",
+        close: 250,
+        open: 248,
+        high: 252,
+        low: 247,
+        volume: 5000,
+      },
     ];
     const tableName = "market_data_1m";
 
