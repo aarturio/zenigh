@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from "vitest";
 
 // Mock the Knex database connection with a factory function
-vi.mock("../../../db/connection.js", () => {
+vi.mock("../../db/connection.js", () => {
   const mockQueryBuilder = {
     where: vi.fn().mockReturnThis(),
     first: vi.fn(),
@@ -16,9 +16,8 @@ vi.mock("../../../db/connection.js", () => {
   };
 });
 
-// Import AFTER mocking
-import UserOperations from "../../../db/user-operations.js";
-import db from "../../../db/connection.js";
+import UserOperations from "../../db/user-operations.js";
+import db from "../../db/connection.js";
 
 describe("UserOperations - registerUser", () => {
   let mockQueryBuilder;

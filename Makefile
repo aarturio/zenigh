@@ -39,3 +39,6 @@ stop-instance: ## Stop EC2 instance
 
 ssh-connect: ## Connect to EC2 instance
 	ssh -i zenigh-key.pem ubuntu@$(EC2_INSTANCE_PUBLIC_IP)
+
+test-backend:
+	cd backend && npm run test
