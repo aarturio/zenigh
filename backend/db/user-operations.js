@@ -1,32 +1,7 @@
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import db from "./connection.js";
+import AuthUtils from "../utils/auth-utils.js";
 
 class UserOperations {
-  static async hashPassword(password) {
-    const saltRounds = 12;
-    return await bcrypt.hash(password, saltRounds);
-  }
-
-  static async comparePassword(password, hash) {
-    return await bcrypt.compare(password, hash);
-  }
-
-  static generateJWT(userId, email) {
-    const secret = process.env.JWT_SECRET;
-    return jwt.sign({ userId, email }, secret, { expiresIn: "12h" });
-  }
-
-  static verifyJWT(token) {
-    const secret = process.env.JWT_SECRET;
-    try {
-      return jwt.verify(token, secret);
-    } catch (error) {
-      console.error("JWT verification error:", error);
-      return null;
-    }
-  }
-
   // Register a new user
   static async registerUser({ email, password, firstName, lastName }) {
     // Check if user exists
@@ -36,7 +11,7 @@ class UserOperations {
     }
 
     // Hash password
-    const passwordHash = await bcrypt.hash(password, 12);
+    const passwordHash = await AuthUtils.hashPassword(password);
 
     // Insert user
     const [user] = await db("users")
@@ -49,11 +24,7 @@ class UserOperations {
       .returning(["id", "email", "first_name", "last_name", "created_at"]);
 
     // Generate token
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
+    const token = AuthUtils.generateJWT(user.id, user.email);
 
     return {
       user: {
@@ -76,17 +47,16 @@ class UserOperations {
     }
 
     // Verify password
-    const isValid = await bcrypt.compare(password, user.password_hash);
+    const isValid = await AuthUtils.comparePassword(
+      password,
+      user.password_hash
+    );
     if (!isValid) {
       throw new Error("Invalid email or password");
     }
 
     // Generate token
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
+    const token = AuthUtils.generateJWT(user.id, user.email);
 
     return {
       user: {
