@@ -19,6 +19,7 @@ import {
   getVolumeTrend,
   getVolumeConfirmation,
 } from './indicators/index.js';
+import DatabaseOperations from '../db/db-operations.js';
 
 /**
  * Default configuration for technical indicators
@@ -495,6 +496,137 @@ class IndicatorsManager {
   updateConfig(newConfig) {
     this.config = { ...this.config, ...newConfig };
     this.clearCache(); // Clear cache when config changes
+  }
+
+  /**
+   * Calculate indicators from database
+   * @param {string} symbol - Stock symbol
+   * @param {string} timeframe - Timeframe (1T, 5T, 1H, 1D)
+   * @param {object} options - Optional configuration and limit
+   * @returns {Promise<object>} Indicators result
+   */
+  async calculateFromDatabase(symbol, timeframe, options = {}) {
+    const { limit = 200, useCache = true, ...indicatorOptions } = options;
+
+    // Check cache first if enabled
+    if (useCache) {
+      const cacheKey = `${symbol}:${timeframe}`;
+      const cached = this.cache.get(cacheKey);
+      const now = Date.now();
+
+      if (cached && now - cached.timestamp < this.cacheTimeout) {
+        return cached.data;
+      }
+    }
+
+    // Fetch data from database
+    const marketData = await DatabaseOperations.getRecentBarsForIndicators(
+      symbol,
+      timeframe,
+      limit
+    );
+
+    // Calculate indicators
+    const indicators = this.calculateAll(marketData, indicatorOptions);
+
+    // Add metadata
+    indicators.symbol = symbol;
+    indicators.timeframe = timeframe;
+
+    // Cache if enabled
+    if (useCache) {
+      this.cache.set(`${symbol}:${timeframe}`, {
+        data: indicators,
+        timestamp: Date.now(),
+      });
+    }
+
+    return indicators;
+  }
+
+  /**
+   * Calculate indicators for multiple symbols
+   * @param {string[]} symbols - Array of stock symbols
+   * @param {string} timeframe - Timeframe
+   * @param {object} options - Optional configuration
+   * @returns {Promise<object>} Object with symbol keys and indicator values
+   */
+  async calculateMultipleFromDatabase(symbols, timeframe, options = {}) {
+    const results = {};
+
+    // Process in parallel for performance
+    await Promise.all(
+      symbols.map(async (symbol) => {
+        try {
+          results[symbol] = await this.calculateFromDatabase(
+            symbol,
+            timeframe,
+            options
+          );
+        } catch (error) {
+          // Log error but continue with other symbols
+          console.error(`Failed to calculate indicators for ${symbol}:`, error.message);
+          results[symbol] = { error: error.message };
+        }
+      })
+    );
+
+    return results;
+  }
+
+  /**
+   * Get latest indicators with auto-refresh
+   * @param {string} symbol - Stock symbol
+   * @param {string} timeframe - Timeframe
+   * @param {object} options - Optional configuration
+   * @returns {Promise<object>} Latest indicators
+   */
+  async getLatestIndicators(symbol, timeframe, options = {}) {
+    // Always fetch fresh data and clear cache
+    this.clearCache(symbol, timeframe);
+
+    return await this.calculateFromDatabase(symbol, timeframe, {
+      ...options,
+      useCache: false, // Force fresh calculation
+    });
+  }
+
+  /**
+   * Check if symbol has enough data for indicators
+   * @param {string} symbol - Stock symbol
+   * @param {string} timeframe - Timeframe
+   * @param {number} requiredBars - Minimum bars needed
+   * @returns {Promise<boolean>} True if enough data
+   */
+  async hasEnoughData(symbol, timeframe, requiredBars = 50) {
+    return await DatabaseOperations.hasEnoughData(
+      symbol,
+      timeframe,
+      requiredBars
+    );
+  }
+
+  /**
+   * Get indicator summary for quick overview
+   * @param {string} symbol - Stock symbol
+   * @param {string} timeframe - Timeframe
+   * @returns {Promise<object>} Simplified indicator summary
+   */
+  async getSummary(symbol, timeframe) {
+    const indicators = await this.calculateFromDatabase(symbol, timeframe);
+
+    return {
+      symbol,
+      timeframe,
+      timestamp: indicators.timestamp,
+      signal: indicators.signals.overall,
+      strength: indicators.signals.strength,
+      rsi: indicators.indicators.momentum?.rsi?.value,
+      macdCrossover: indicators.indicators.trend?.macd?.crossover,
+      bollingerPosition: indicators.indicators.volatility?.bollingerBands?.position,
+      volumeLevel: indicators.indicators.volume?.analysis?.level,
+      alerts: indicators.signals.alerts,
+    };
   }
 }
 
