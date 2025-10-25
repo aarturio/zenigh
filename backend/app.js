@@ -9,6 +9,7 @@ import UserOperations from "./db/user-operations.js";
 import seedDefaultUser from "./db/seed.js";
 import { authenticateToken } from "./middleware/auth.js";
 import { TABLE_MAP } from "./config.js";
+import indicatorsManager from "./services/indicators-manager.js";
 
 const app = express();
 const port = 3000;
@@ -127,6 +128,21 @@ app.get("/ingest/:startDate/:endDate", async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
     console.error(`Error processing:`, error.message);
+  }
+});
+
+app.get("/ti/:symbol/:timeframe/", async (req, res) => {
+  try {
+    const { symbol, timeframe } = req.params;
+    const indicators = await indicatorsManager.calculateFromDatabase(
+      symbol,
+      timeframe
+    );
+
+    res.json(indicators);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+    console.error(`Error calculating indicators:`, error.message);
   }
 });
 

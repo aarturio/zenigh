@@ -9,8 +9,32 @@ import {
 } from "recharts";
 import LastPointDot from "./PulsingDot.jsx";
 
-const Chart = ({ bars, onHover }) => {
+const Chart = ({ bars, onHover, indicators, enabledIndicators }) => {
   const [lastActiveIndex, setLastActiveIndex] = React.useState(null);
+
+  // Define indicator display configurations
+  const indicatorConfigs = {
+    sma20: { color: "#10b981", strokeWidth: 1.5, dataKey: "sma_20" },
+    sma50: { color: "#3b82f6", strokeWidth: 1.5, dataKey: "sma_50" },
+    sma200: { color: "#8b5cf6", strokeWidth: 1.5, dataKey: "sma_200" },
+    ema12: { color: "#f59e0b", strokeWidth: 1.5, dataKey: "ema_12" },
+    ema26: { color: "#ef4444", strokeWidth: 1.5, dataKey: "ema_26" },
+  };
+
+  // Helper function to get nested indicator value
+  const getIndicatorValue = (dataKey) => {
+    if (!indicators) return null;
+
+    // SMA indicators
+    if (dataKey.startsWith('sma_')) {
+      return indicators.sma?.[dataKey] ?? null;
+    }
+    // EMA indicators
+    if (dataKey.startsWith('ema_')) {
+      return indicators.ema?.[dataKey] ?? null;
+    }
+    return null;
+  };
 
   return (
     <ResponsiveContainer width="100%" height="100%" color="teal.500">
@@ -62,6 +86,28 @@ const Chart = ({ bars, onHover }) => {
           }}
           isAnimationActive={false}
         />
+
+        {/* Render indicator lines conditionally */}
+        {Object.entries(indicatorConfigs).map(([id, config]) => {
+          // Only render if indicator is enabled and has data
+          if (enabledIndicators?.[id] && getIndicatorValue(config.dataKey) !== null) {
+            const indicatorValue = getIndicatorValue(config.dataKey);
+
+            return (
+              <Line
+                key={id}
+                type="monotone"
+                dataKey={() => indicatorValue}
+                stroke={config.color}
+                strokeWidth={config.strokeWidth}
+                dot={false}
+                isAnimationActive={false}
+                strokeDasharray={id.startsWith('ema') ? "5 5" : undefined}
+              />
+            );
+          }
+          return null;
+        })}
       </LineChart>
     </ResponsiveContainer>
   );
