@@ -26,18 +26,18 @@ const Chart = ({ bars, onHover, indicators, enabledIndicators }) => {
     if (!indicators) return null;
 
     // SMA indicators
-    if (dataKey.startsWith('sma_')) {
+    if (dataKey.startsWith("sma_")) {
       return indicators.sma?.[dataKey] ?? null;
     }
     // EMA indicators
-    if (dataKey.startsWith('ema_')) {
+    if (dataKey.startsWith("ema_")) {
       return indicators.ema?.[dataKey] ?? null;
     }
     return null;
   };
 
   return (
-    <ResponsiveContainer width="100%" height="100%" color="teal.500">
+    <ResponsiveContainer width="100%" height="100%">
       <LineChart
         data={bars}
         margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
@@ -64,9 +64,10 @@ const Chart = ({ bars, onHover, indicators, enabledIndicators }) => {
           labelFormatter={(label) => label}
           formatter={() => []}
           contentStyle={{
-            border: "1px solid #ccc",
+            backgroundColor: "var(--color-bg)",
+            border: "1px solid var(--color-primary-30)",
             borderRadius: "8px",
-            color: "teal",
+            color: "var(--color-primary)",
             textAlign: "center",
             display: "flex",
             alignItems: "center",
@@ -76,7 +77,7 @@ const Chart = ({ bars, onHover, indicators, enabledIndicators }) => {
         <Line
           type="monotone"
           dataKey="closePrice"
-          stroke="teal"
+          stroke="var(--color-primary)"
           strokeWidth={2}
           dot={(props) => {
             const { key, ...dotProps } = props;
@@ -90,7 +91,10 @@ const Chart = ({ bars, onHover, indicators, enabledIndicators }) => {
         {/* Render indicator lines conditionally */}
         {Object.entries(indicatorConfigs).map(([id, config]) => {
           // Only render if indicator is enabled and has data
-          if (enabledIndicators?.[id] && getIndicatorValue(config.dataKey) !== null) {
+          if (
+            enabledIndicators?.[id] &&
+            getIndicatorValue(config.dataKey) !== null
+          ) {
             const indicatorValue = getIndicatorValue(config.dataKey);
 
             return (
@@ -102,7 +106,7 @@ const Chart = ({ bars, onHover, indicators, enabledIndicators }) => {
                 strokeWidth={config.strokeWidth}
                 dot={false}
                 isAnimationActive={false}
-                strokeDasharray={id.startsWith('ema') ? "5 5" : undefined}
+                strokeDasharray={id.startsWith("ema") ? "5 5" : undefined}
               />
             );
           }

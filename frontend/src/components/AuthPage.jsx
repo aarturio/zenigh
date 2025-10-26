@@ -1,22 +1,11 @@
-import { useState } from 'react';
 import { Container, Box } from '@chakra-ui/react';
 import LoginForm from './LoginForm';
-import RegisterForm from './RegisterForm';
 
 const AuthPage = () => {
-  const [isLogin, setIsLogin] = useState(true);
-
-  const switchToRegister = () => setIsLogin(false);
-  const switchToLogin = () => setIsLogin(true);
-
   return (
-    <Container maxW="100vw" minH="100vh" bg="gray.50" py={8}>
+    <Container maxW="100vw" minH="100vh" bg="var(--color-bg)" py={8} display="flex" alignItems="center" justifyContent="center">
       <Box>
-        {isLogin ? (
-          <LoginForm onSwitchToRegister={switchToRegister} />
-        ) : (
-          <RegisterForm onSwitchToLogin={switchToLogin} />
-        )}
+        <LoginForm />
       </Box>
     </Container>
   );

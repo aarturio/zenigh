@@ -43,14 +43,15 @@ const RSIChart = ({ rsiData }) => {
         data={chartData}
         margin={{ top: 10, right: 30, left: 20, bottom: 10 }}
       >
-        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-text-10)" />
         <XAxis hide />
-        <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
+        <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: "var(--color-text)" }} />
         <Tooltip
           contentStyle={{
-            backgroundColor: "white",
-            border: "1px solid #ccc",
+            backgroundColor: "var(--color-bg)",
+            border: "1px solid var(--color-primary-30)",
             borderRadius: "8px",
+            color: "var(--color-text)",
           }}
           formatter={(value, name) => {
             if (name === "rsi") {
@@ -90,7 +91,7 @@ const RSIChart = ({ rsiData }) => {
         />
 
         {/* Middle line (50) */}
-        <ReferenceLine y={50} stroke="#9ca3af" strokeWidth={1} />
+        <ReferenceLine y={50} stroke="var(--color-text-40)" strokeWidth={1} />
 
         {/* RSI Line */}
         <Line
@@ -102,7 +103,7 @@ const RSIChart = ({ rsiData }) => {
             r: 5,
             fill: getRSIColor(),
             strokeWidth: 2,
-            stroke: "white",
+            stroke: "var(--color-text)",
           }}
           isAnimationActive={false}
         />

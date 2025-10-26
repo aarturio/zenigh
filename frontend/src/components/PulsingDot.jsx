@@ -2,7 +2,7 @@
 const PulsingDot = ({ cx, cy }) => (
   <g>
     {/* Outer pulsing circle */}
-    <circle cx={cx} cy={cy} r={8} fill="teal" opacity={0.3}>
+    <circle cx={cx} cy={cy} r={8} fill="var(--color-primary)" opacity={0.3}>
       <animate
         attributeName="r"
         values="5;15"
@@ -17,7 +17,7 @@ const PulsingDot = ({ cx, cy }) => (
       />
     </circle>
     {/* Inner solid dot */}
-    <circle cx={cx} cy={cy} r={4} fill="teal" />
+    <circle cx={cx} cy={cy} r={4} fill="var(--color-primary)" />
   </g>
 );
 

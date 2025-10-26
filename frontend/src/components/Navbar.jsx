@@ -6,11 +6,11 @@ const Navbar = () => {
   const { user, logout } = useAuth();
 
   return (
-    <Box bg="white" borderBottom="1px" borderColor="gray.200" px={4} py={4}>
+    <Box borderBottom="1px" borderColor="var(--color-primary-20)" px={4} py={4} bg="var(--color-bg)">
       <Flex justify="flex-start" align="center">
         <HStack spacing={4}>
-          <User size={20} />
-          <LogOut size={20} onClick={logout} style={{ cursor: "pointer" }} />
+          <User size={20} color="var(--color-primary)" style={{ cursor: "pointer" }} />
+          <LogOut size={20} color="var(--color-primary)" onClick={logout} style={{ cursor: "pointer" }} />
         </HStack>
       </Flex>
     </Box>
