@@ -6,12 +6,12 @@ const SearchBar = ({ ticker, setTicker, onSubmit }) => {
     <form onSubmit={onSubmit} style={{ width: "100%" }}>
       <Box position="relative" w="100%">
         <Input
-          className="card"
-          color="gray.800"
+          className="input-teal"
           value={ticker}
           onChange={(e) => setTicker(e.target.value)}
           w="100%"
-          pl={10} // Add left padding for the icon
+          pl={10}
+          placeholder="Search ticker..."
         />
         <Box
           position="absolute"
@@ -19,7 +19,7 @@ const SearchBar = ({ ticker, setTicker, onSubmit }) => {
           top="50%"
           transform="translateY(-50%)"
           pointerEvents="none"
-          color="gray.400"
+          className="text-tertiary"
         >
           <Search size={16} />
         </Box>

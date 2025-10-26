@@ -37,24 +37,25 @@ const MACDChart = ({ macdData }) => {
         data={chartData}
         margin={{ top: 10, right: 30, left: 20, bottom: 10 }}
       >
-        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-text-10)" />
         <XAxis hide />
         <YAxis
           domain={["auto", "auto"]}
-          tick={{ fontSize: 12 }}
+          tick={{ fontSize: 12, fill: "var(--color-text)" }}
           tickFormatter={(value) => value.toFixed(4)}
         />
         <Tooltip
           contentStyle={{
-            backgroundColor: "white",
-            border: "1px solid #ccc",
+            backgroundColor: "var(--color-bg)",
+            border: "1px solid var(--color-primary-30)",
             borderRadius: "8px",
+            color: "var(--color-text)",
           }}
           formatter={(value, name) => [value.toFixed(4), name.toUpperCase()]}
         />
 
         {/* Zero reference line */}
-        <ReferenceLine y={0} stroke="#9ca3af" strokeWidth={1} />
+        <ReferenceLine y={0} stroke="var(--color-text-40)" strokeWidth={1} />
 
         {/* MACD Histogram */}
         <Bar

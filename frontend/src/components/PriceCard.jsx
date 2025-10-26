@@ -9,10 +9,10 @@ const PriceCard = (props) => {
 
   return (
     <Box p={2}>
-      <Text textStyle="lg" fontWeight="bold" color="gray.800">
+      <Text textStyle="lg" fontWeight="bold" color="var(--color-text)">
         {bars[bars.length - 1]?.symbol}
       </Text>
-      <Text textStyle="lg" fontWeight="bold" color="teal">
+      <Text textStyle="lg" fontWeight="bold" color="var(--color-primary)">
         <FormatNumber
           value={
             hoveredPrice !== null

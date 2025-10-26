@@ -140,7 +140,7 @@ function ChartView() {
   };
 
   return (
-    <Container maxW="100vw" p={4} className="app-container">
+    <Container maxW="100vw" p={4} className="app-container" bg="var(--color-bg)">
       <HStack spacing={4} align="stretch" h="calc(100vh - 100px)">
         {/* Sidebar */}
         <Sidebar
@@ -187,7 +187,7 @@ function ChartView() {
               display={enabledIndicators.macd ? "flex" : "none"}
               flexDirection="column"
             >
-              <Box fontSize="sm" fontWeight="bold" mb={2}>
+              <Box fontSize="sm" fontWeight="bold" mb={2} color="var(--color-text)">
                 MACD
               </Box>
               <Box flex="1" minH="0">
@@ -204,7 +204,7 @@ function ChartView() {
               display={enabledIndicators.rsi ? "flex" : "none"}
               flexDirection="column"
             >
-              <Box fontSize="sm" fontWeight="bold" mb={2}>
+              <Box fontSize="sm" fontWeight="bold" mb={2} color="var(--color-text)">
                 RSI
               </Box>
               <Box flex="1" minH="0">
@@ -223,7 +223,7 @@ function ChartView() {
                 alignItems="center"
                 justifyContent="center"
               >
-                <Text color="gray.500" fontSize="sm">
+                <Text color="var(--color-text-50)" fontSize="sm">
                   Toggle MACD or RSI to view oscillators
                 </Text>
               </Box>
