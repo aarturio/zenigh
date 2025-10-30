@@ -1,6 +1,6 @@
 import { Box, Field, Input, VStack } from "@chakra-ui/react";
-import SearchBar from "./SearchBar";
-import IndicatorTogglePanel from "./IndicatorTogglePanel";
+import SearchBar from "../ui/SearchBar";
+import IndicatorTogglePanel from "../charts/IndicatorTogglePanel";
 
 const Sidebar = ({
   ticker,

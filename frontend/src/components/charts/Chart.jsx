@@ -7,7 +7,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import LastPointDot from "./PulsingDot.jsx";
+import LastPointDot from "../ui/PulsingDot.jsx";
 
 const Chart = ({ bars, onHover, indicators, enabledIndicators }) => {
   const [lastActiveIndex, setLastActiveIndex] = React.useState(null);

@@ -1,5 +1,5 @@
 import { Box, Flex, Text, Button, HStack } from "@chakra-ui/react";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 import { User, LogOut } from "lucide-react";
 
 const Navbar = () => {

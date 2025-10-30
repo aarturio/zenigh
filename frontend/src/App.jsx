@@ -1,10 +1,9 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import "./App.css";
-import ProtectedRoute from "./components/ProtectedRoute.jsx";
-import Navbar from "./components/Navbar.jsx";
-import LandingPage from "./components/LandingPage.jsx";
-import ChartView from "./components/ChartView.jsx";
-import AuthPage from "./components/AuthPage.jsx";
+import ProtectedRoute from "./components/auth/ProtectedRoute.jsx";
+import Navbar from "./components/layout/Navbar.jsx";
+import LandingPage from "./components/pages/LandingPage.jsx";
+import ChartView from "./components/pages/ChartView.jsx";
 import { useAuth } from "./contexts/AuthContext.jsx";
 
 function App() {
@@ -15,7 +14,6 @@ function App() {
       <Routes>
         {/* Public routes */}
         <Route path="/" element={user ? <Navigate to="/chart" /> : <LandingPage />} />
-        <Route path="/auth" element={user ? <Navigate to="/chart" /> : <AuthPage />} />
 
         {/* Protected routes */}
         <Route

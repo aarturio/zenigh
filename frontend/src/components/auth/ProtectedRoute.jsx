@@ -1,6 +1,6 @@
-import { useAuth } from '../contexts/AuthContext';
-import { Box, Spinner, Center } from '@chakra-ui/react';
-import AuthPage from './AuthPage';
+import { useAuth } from '../../contexts/AuthContext';
+import { Spinner, Center } from '@chakra-ui/react';
+import { Navigate } from 'react-router-dom';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -14,7 +14,7 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    return <AuthPage />;
+    return <Navigate to="/" replace />;
   }
 
   return children;
