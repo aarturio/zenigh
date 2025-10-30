@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
 import { Box, HStack, Container, VStack, Text } from "@chakra-ui/react";
-import Chart from "./Chart.jsx";
-import PriceCard from "./PriceCard.jsx";
-import TimeframeButtons from "./TimeframeButtons.jsx";
-import Sidebar from "./Sidebar.jsx";
-import MACDChart from "./MACDChart.jsx";
-import RSIChart from "./RSIChart.jsx";
+import Chart from "../charts/Chart.jsx";
+import PriceCard from "../charts/PriceCard.jsx";
+import TimeframeButtons from "../charts/TimeframeButtons.jsx";
+import Sidebar from "../layout/Sidebar.jsx";
+import MACDChart from "../charts/MACDChart.jsx";
+import RSIChart from "../charts/RSIChart.jsx";
 
 function ChartView() {
   const [bars, setBars] = useState([]);

@@ -5,8 +5,6 @@ import {
   HStack,
   Heading,
   Button,
-  Input,
-  Text,
   DialogRoot,
   DialogBackdrop,
   DialogContent,
@@ -14,7 +12,8 @@ import {
   DialogCloseTrigger,
 } from "@chakra-ui/react";
 import { keyframes } from "@emotion/react";
-import LoginForm from "./LoginForm";
+import LoginForm from "../auth/LoginForm";
+import SignUpForm from "../auth/SignUpForm";
 
 const fadeIn = keyframes`
   from {
@@ -30,18 +29,6 @@ const fadeIn = keyframes`
 const LandingPage = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
-  const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleMailingList = (e) => {
-    e.preventDefault();
-    // TODO: Add mailing list API integration
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
-      setEmail("");
-    }, 3000);
-  };
 
   return (
     <Box minH="100vh" bg="var(--color-bg)" position="relative">
@@ -50,16 +37,13 @@ const LandingPage = () => {
         <HStack spacing={3}>
           <Button
             size="sm"
-            bg="var(--color-primary)"
-            color="var(--color-bg)"
-            _hover={{ bg: "var(--color-primary-dark)" }}
-            transition="all 0.2s"
+            className="btn-fill-left-to-right"
             fontSize="sm"
             fontWeight="500"
             letterSpacing="wide"
             h="30px"
+            w="90px"
             borderRadius="24px"
-            px={6}
             onClick={() => setIsLoginOpen(true)}
           >
             Login
@@ -67,17 +51,13 @@ const LandingPage = () => {
 
           <Button
             size="sm"
-            bg="transparent"
-            color="var(--color-primary)"
-            border="1px solid var(--color-primary)"
-            _hover={{ bg: "var(--color-primary-10)" }}
-            transition="all 0.2s"
+            className="btn-fill-left-to-right"
             fontSize="sm"
             fontWeight="500"
             letterSpacing="wide"
             h="30px"
+            w="90px"
             borderRadius="24px"
-            px={6}
             onClick={() => setIsSignUpOpen(true)}
           >
             Sign Up
@@ -105,7 +85,7 @@ const LandingPage = () => {
             color="var(--color-text-60)"
             _hover={{ color: "var(--color-text)" }}
           />
-          <DialogBody pb={6}>
+          <DialogBody className="auth-dialog-body">
             <LoginForm />
           </DialogBody>
         </DialogContent>
@@ -131,56 +111,8 @@ const LandingPage = () => {
             color="var(--color-text-60)"
             _hover={{ color: "var(--color-text)" }}
           />
-          <DialogBody pb={6} pt={8}>
-            <VStack spacing={6} textAlign="center">
-              <Heading
-                color="var(--color-text)"
-                fontWeight="300"
-                fontSize="2xl"
-              >
-                Sign Ups Coming Soon
-              </Heading>
-
-              <Text className="text-secondary" fontSize="md">
-                We're not accepting new sign ups at the moment. Join our mailing
-                list to be notified when we launch!
-              </Text>
-
-              {!submitted ? (
-                <form onSubmit={handleMailingList} style={{ width: "100%" }}>
-                  <VStack spacing={4} w="full">
-                    <Input
-                      type="email"
-                      className="input-teal"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Enter your email"
-                      required
-                    />
-                    <Button
-                      type="submit"
-                      size="lg"
-                      width="full"
-                      bg="var(--color-primary)"
-                      color="var(--color-bg)"
-                      _hover={{ bg: "var(--color-primary-dark)" }}
-                      transition="all 0.2s"
-                      h="48px"
-                      borderRadius="24px"
-                      fontWeight="500"
-                    >
-                      Join Mailing List
-                    </Button>
-                  </VStack>
-                </form>
-              ) : (
-                <Box className="success-box" width="full">
-                  <Text fontWeight="500">
-                    Thanks for joining! We'll be in touch soon.
-                  </Text>
-                </Box>
-              )}
-            </VStack>
+          <DialogBody className="auth-dialog-body">
+            <SignUpForm />
           </DialogBody>
         </DialogContent>
       </DialogRoot>
