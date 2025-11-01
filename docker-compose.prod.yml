@@ -38,11 +38,13 @@ services:
     restart: unless-stopped
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        VITE_BACKEND_URL: https://zenigh.ai/api
     expose:
-      - "5173"
-    environment:
-      - VITE_BACKEND_URL=https://zenigh.ai/api
+      - "80"
     depends_on:
       - backend
     restart: unless-stopped
