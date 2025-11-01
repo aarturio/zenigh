@@ -20,36 +20,73 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/zenigh-key
           chmod 600 ~/.ssh/zenigh-key
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+          # Disable strict host key checking (for initial connection)
+          cat >> ~/.ssh/config << EOF
+          Host ${{ secrets.EC2_HOST }}
+            StrictHostKeyChecking no
+            UserKnownHostsFile=/dev/null
+          EOF
 
       - name: Deploy to EC2
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          DEFAULT_USER_EMAIL: ${{ secrets.DEFAULT_USER_EMAIL }}
+          DEFAULT_USER_PASSWORD: ${{ secrets.DEFAULT_USER_PASSWORD }}
+          DEFAULT_USER_FIRSTNAME: ${{ secrets.DEFAULT_USER_FIRSTNAME }}
+          DEFAULT_USER_LASTNAME: ${{ secrets.DEFAULT_USER_LASTNAME }}
         run: |
-          # Write ENV_FILE to temporary file
-          echo "${{ secrets.ENV_FILE }}" > /tmp/zenigh.env
+          # Create .env file from secrets
+          cat > /tmp/zenigh.env << EOF
+          ALPACA_API_KEY=$ALPACA_API_KEY
+          ALPACA_SECRET_KEY=$ALPACA_SECRET_KEY
+          DB_USER=$DB_USER
+          DB_PASSWORD=$DB_PASSWORD
+          DB_NAME=$DB_NAME
+          JWT_SECRET=$JWT_SECRET
+          VITE_BACKEND_URL=https://zenigh.ai/api
+          DEFAULT_USER_EMAIL=$DEFAULT_USER_EMAIL
+          DEFAULT_USER_PASSWORD=$DEFAULT_USER_PASSWORD
+          DEFAULT_USER_FIRSTNAME=$DEFAULT_USER_FIRSTNAME
+          DEFAULT_USER_LASTNAME=$DEFAULT_USER_LASTNAME
+          EOF
 
           # Copy .env to EC2
           scp -i ~/.ssh/zenigh-key /tmp/zenigh.env ubuntu@$EC2_HOST:~/zenigh/.env
 
           # Deploy
-          ssh -i ~/.ssh/zenigh-key ubuntu@$EC2_HOST << 'ENDSSH'
+          ssh -i ~/.ssh/zenigh-key ubuntu@$EC2_HOST << ENDSSH
             set -e
 
             echo "📦 Starting deployment..."
             cd ~/zenigh
 
             echo "🔄 Pulling latest code from main branch..."
-            git pull origin main
+            git pull https://oauth2:$GH_PAT@github.com/aarturio/zenigh.git main
 
             echo "🐳 Rebuilding and restarting Docker containers..."
             docker-compose -f docker-compose.prod.yml up -d --build
 
+            echo "⏳ Waiting for containers to be healthy..."
+            sleep 10
+
+            echo "📊 Container status:"
+            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+            echo "📋 Checking container logs for errors..."
+            docker-compose -f docker-compose.prod.yml logs --tail=50 nginx
+
             echo "🧹 Cleaning up old Docker images..."
             docker image prune -af
 
-            echo "✅ Deployment complete! Container status:"
-            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+            echo "✅ Deployment complete!"
           ENDSSH
 
           # Cleanup
@@ -58,13 +95,15 @@ jobs:
       - name: Health Check
         run: |
           echo "🏥 Running health check..."
-          sleep 30  # Wait for containers to fully start
+          sleep 60  # Wait for containers to fully start (rebuild takes time)
 
           # Check if Nginx is responding
           if curl -f http://${{ secrets.EC2_HOST }} --max-time 10; then
             echo "✅ Nginx health check passed!"
           else
             echo "❌ Nginx health check failed!"
+            echo "Checking container status on server..."
+            ssh -i ~/.ssh/zenigh-key ubuntu@${{ secrets.EC2_HOST }} "cd ~/zenigh && docker-compose -f docker-compose.prod.yml ps && docker-compose -f docker-compose.prod.yml logs --tail=100"
             exit 1
           fi
 
