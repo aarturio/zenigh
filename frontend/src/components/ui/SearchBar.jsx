@@ -3,7 +3,10 @@ import { Search } from "lucide-react";
 
 const SearchBar = ({ ticker, setTicker, onSubmit }) => {
   return (
-    <form onSubmit={onSubmit} style={{ width: "100%" }}>
+    <form
+      onSubmit={onSubmit}
+      style={{ width: "100%", maxWidth: "200px", margin: "0 auto" }}
+    >
       <Box position="relative" w="100%">
         <Input
           className="input-teal"

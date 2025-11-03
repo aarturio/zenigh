@@ -10,6 +10,7 @@
   --color-overlay: rgba(0, 0, 0, 0.8); /* Semi-transparent overlay for modals */
 
   /* Opacity variations */
+  --color-primary-5: rgba(20, 184, 166, 0.05);
   --color-primary-10: rgba(20, 184, 166, 0.1);
   --color-primary-20: rgba(20, 184, 166, 0.2);
   --color-primary-30: rgba(20, 184, 166, 0.3);
