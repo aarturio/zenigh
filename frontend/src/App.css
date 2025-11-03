@@ -197,3 +197,13 @@
   margin-top: 1rem; /* Extra spacing above submit button */
   align-self: center; /* Center button only */
 }
+
+/* Disable focus outline on Recharts SVG elements */
+.recharts-surface:focus,
+.recharts-surface:active {
+  outline: none !important;
+}
+
+svg.recharts-surface {
+  outline: none !important;
+}

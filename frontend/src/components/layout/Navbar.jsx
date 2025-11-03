@@ -1,18 +1,43 @@
-import { Box, Flex, Text, Button, HStack } from "@chakra-ui/react";
+import { Box, Flex, HStack, useDisclosure } from "@chakra-ui/react";
 import { useAuth } from "../../contexts/AuthContext";
-import { User, LogOut } from "lucide-react";
+import { Menu } from "lucide-react";
+import SearchBar from "../ui/SearchBar";
+import MenuDrawer from "./MenuDrawer";
 
-const Navbar = () => {
+const Navbar = ({ ticker, setTicker, onSubmit }) => {
   const { user, logout } = useAuth();
+  const { open, onOpen, onClose } = useDisclosure();
 
   return (
-    <Box borderBottom="1px" borderColor="var(--color-primary-20)" px={4} py={4} bg="var(--color-bg)">
-      <Flex justify="flex-start" align="center">
+    <Box
+      borderBottom="1px"
+      borderColor="var(--color-primary-20)"
+      px={4}
+      py={4}
+      bg="var(--color-bg)"
+    >
+      <Flex justify="space-between" align="center">
         <HStack spacing={4}>
-          <User size={20} color="var(--color-primary)" style={{ cursor: "pointer" }} />
-          <LogOut size={20} color="var(--color-primary)" onClick={logout} style={{ cursor: "pointer" }} />
+          <Box
+            as="button"
+            onClick={onOpen}
+            cursor="pointer"
+            transition="transform 0.3s ease"
+            transform={open ? "rotate(180deg)" : "rotate(0deg)"}
+          >
+            <Menu size={20} color="var(--color-primary)" />
+          </Box>
         </HStack>
+
+        {ticker !== undefined && (
+          <SearchBar
+            ticker={ticker}
+            setTicker={setTicker}
+            onSubmit={onSubmit}
+          />
+        )}
       </Flex>
+      <MenuDrawer open={open} onClose={onClose} />
     </Box>
   );
 };

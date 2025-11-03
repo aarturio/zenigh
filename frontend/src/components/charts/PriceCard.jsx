@@ -8,7 +8,7 @@ const PriceCard = (props) => {
   }
 
   return (
-    <Box p={2}>
+    <Box p={2} textAlign="center">
       <Text textStyle="lg" fontWeight="bold" color="var(--color-text)">
         {bars[bars.length - 1]?.symbol}
       </Text>
