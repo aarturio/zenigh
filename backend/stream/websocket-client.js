@@ -9,6 +9,11 @@ class WebSocketClient {
     this.ws = null;
     this.isAuthenticated = false;
     this.subscriptions = new Set();
+    this.reconnectAttempts = 0;
+    this.maxReconnectAttempts = 5;
+    this.reconnectDelay = 1000;
+    this.onConnectionLost = () => {}; // Callback for StreamController
+    this.shouldReconnect = true;
   }
 
   connect() {
@@ -23,6 +28,7 @@ class WebSocketClient {
           this.isTest ? "(TEST)" : `(${this.feed.toUpperCase()})`
         }`
       );
+      this.reconnectAttempts = 0; // Reset on successful connection
       this.authenticate();
     });
 
@@ -42,6 +48,24 @@ class WebSocketClient {
     this.ws.on("close", (code, reason) => {
       console.log(`WebSocket closed: ${code} ${reason}`);
       this.isAuthenticated = false;
+
+      // Notify controller
+      this.onConnectionLost();
+
+      // Auto-reconnect with exponential backoff
+      if (this.shouldReconnect && this.reconnectAttempts < this.maxReconnectAttempts) {
+        const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts);
+        console.log(
+          `Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts + 1}/${this.maxReconnectAttempts})`
+        );
+
+        setTimeout(() => {
+          this.reconnectAttempts++;
+          this.connect();
+        }, delay);
+      } else if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+        console.error("Max reconnection attempts reached");
+      }
     });
   }
 
@@ -62,7 +86,11 @@ class WebSocketClient {
           if (msg.msg === "authenticated") {
             console.log("Successfully authenticated");
             this.isAuthenticated = true;
-            this.onAuthenticated();
+            try {
+              this.onAuthenticated();
+            } catch (error) {
+              console.error("Error in onAuthenticated callback:", error);
+            }
           } else if (msg.msg.includes("subscribed")) {
             console.log("Subscription successful:", msg.msg);
           }
@@ -71,11 +99,52 @@ class WebSocketClient {
           console.error("Error from server:", msg.msg);
           break;
         case "b": // Bar
-          this.onBar(msg);
+          try {
+            // Add randomness to FAKEPACA test data for realistic chart activity
+            if (this.isTest && msg.S === "FAKEPACA") {
+              this.onBar(this.addRandomness(msg));
+            } else {
+              this.onBar(msg);
+            }
+          } catch (error) {
+            console.error("Error processing bar:", error);
+          }
+          break;
         // default:
         //   console.log("Received message:", msg);
       }
     });
+  }
+
+  /**
+   * Add realistic price variations to test data
+   * @param {Object} bar - Original bar data
+   * @returns {Object} Modified bar with random variations
+   */
+  addRandomness(bar) {
+    // Random variation between -0.5% and +0.5%
+    const variation = (Math.random() - 0.5) * 0.01;
+    const basePrice = bar.c || bar.o || 100;
+
+    // Generate new prices with variation
+    const open = basePrice * (1 + variation);
+    const volatility = Math.random() * 0.005; // Up to 0.5% intrabar movement
+    const high = open * (1 + Math.abs(volatility));
+    const low = open * (1 - Math.abs(volatility));
+    const close = low + Math.random() * (high - low);
+
+    // Vary volume randomly between 1000 and 50000
+    const volume = Math.floor(1000 + Math.random() * 49000);
+
+    return {
+      ...bar,
+      o: parseFloat(open.toFixed(2)),
+      h: parseFloat(high.toFixed(2)),
+      l: parseFloat(low.toFixed(2)),
+      c: parseFloat(close.toFixed(2)),
+      v: volume,
+      vw: parseFloat(((high + low + close) / 3).toFixed(2)), // Recalculate VWAP
+    };
   }
 
   subscribe(channels) {
@@ -124,6 +193,7 @@ class WebSocketClient {
   }
 
   disconnect() {
+    this.shouldReconnect = false; // Disable auto-reconnect on manual disconnect
     if (this.ws) {
       this.ws.close();
     }

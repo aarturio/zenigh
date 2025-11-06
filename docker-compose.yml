@@ -4,6 +4,7 @@ services:
     ports:
       - "3000:3000"
     environment:
+      - NODE_ENV=development
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
@@ -16,8 +17,11 @@ services:
       - DEFAULT_USER_FIRSTNAME=${DEFAULT_USER_FIRSTNAME}
       - DEFAULT_USER_LASTNAME=${DEFAULT_USER_LASTNAME}
       - PORT=3000
+      - TALIB_SERVICE_URL=http://talib-service:8001
     depends_on:
       db:
+        condition: service_healthy
+      ta-service:
         condition: service_healthy
     volumes:
       - ./backend:/app
@@ -50,6 +54,23 @@ services:
       - VITE_BACKEND_URL=http://localhost:3000
     depends_on:
       - backend
+
+  ta-service:
+    build: ./ta
+    expose:
+      - "8001"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8001/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    environment:
+      - PYTHONUNBUFFERED=1
+    # Optional: Add volume for hot-reload during development
+    volumes:
+      - ./ta:/app
 
 volumes:
   zenigh_postgres_data:

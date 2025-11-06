@@ -14,28 +14,26 @@ function ChartView({
 }) {
   return (
     <Container {...styles.container}>
-      <HStack {...styles.mainLayout}>
+      <VStack {...styles.mainLayout}>
         {/* Main Chart Area */}
-        <VStack {...styles.mainChartArea}>
-          {/* Price Chart Container */}
-          <Box {...styles.priceChartContainer}>
-            <Box {...styles.priceCardWrapper}>
-              <PriceCard bars={bars} hoveredPrice={hoveredPrice} />
-            </Box>
-            <Box {...styles.chartWrapper}>
-              <LightweightChart bars={bars} onHover={setHoveredPrice} />
-            </Box>
-            <Box {...styles.timeframeButtonContainer}>
-              <TimeframeButtons onTimeframeChange={handleTimeframeChange} />
-            </Box>
+        {/* Price Chart Container */}
+        <Box {...styles.priceChartContainer}>
+          <Box {...styles.priceCardWrapper}>
+            <PriceCard bars={bars} hoveredPrice={hoveredPrice} />
           </Box>
-
-          {/* AI Output Section */}
-          <Box h="200px">
-            <AIOutput output={aiOutput} />
+          <Box {...styles.chartWrapper}>
+            <LightweightChart bars={bars} onHover={setHoveredPrice} />
           </Box>
-        </VStack>
-      </HStack>
+          <Box {...styles.timeframeButtonContainer}>
+            <TimeframeButtons onTimeframeChange={handleTimeframeChange} />
+          </Box>
+        </Box>
+        {/* AI Output Section */}
+        <Box h="200px">
+          <AIOutput output={aiOutput} />
+        </Box>
+        ==
+      </VStack>
     </Container>
   );
 }

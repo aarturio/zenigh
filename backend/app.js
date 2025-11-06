@@ -1,15 +1,14 @@
 import express from "express";
 import cors from "cors";
 import { createServer } from "http";
-import StreamServer from "./stream/stream-server.js";
+import StreamService from "./stream/stream-service.js";
 
-import coreDataClient from "./core/core-data-client.js";
+import coreDataClient from "./ingest/core-data-client.js";
 import DatabaseOperations from "./db/db-operations.js";
 import UserOperations from "./db/user-operations.js";
 import seedDefaultUser from "./db/seed.js";
-import { authenticateToken } from "./middleware/auth.js";
+import { authenticateToken } from "./auth/index.js";
 import { TABLE_MAP } from "./config.js";
-import indicatorsManager from "./services/indicators-manager.js";
 
 const app = express();
 const port = 3000;
@@ -91,60 +90,62 @@ app.get("/market/data/:symbol/:timeframe", async (req, res) => {
   }
 });
 
-app.get("/ingest/:startDate/:endDate", async (req, res) => {
+app.get("/ingest/:startDate/:endDate", authenticateToken, async (req, res) => {
+  const results = { success: [], failed: [] };
+
   try {
     const { startDate, endDate } = req.params;
 
     for (const tf in TABLE_MAP) {
-      const tableName = TABLE_MAP[tf];
-      const data = await coreDataClient.getData(startDate, endDate, tf);
+      try {
+        const tableName = TABLE_MAP[tf];
+        const data = await coreDataClient.getData(startDate, endDate, tf);
 
-      const formattedData = Object.entries(data).flatMap(
-        ([symbol, symbolBars]) =>
-          symbolBars.map((bar) => ({
-            symbol: symbol,
-            timestamp: new Date(bar.t),
-            open: bar.o,
-            high: bar.h,
-            low: bar.l,
-            close: bar.c,
-            volume: bar.v,
-            trade_count: bar.n,
-            vwap: bar.vw,
-          }))
-      );
-
-      if (formattedData.length > 0) {
-        console.log(
-          `Inserting ${formattedData.length} records into ${tableName}`
+        const formattedData = Object.entries(data).flatMap(
+          ([symbol, symbolBars]) =>
+            symbolBars.map((bar) => ({
+              symbol: symbol,
+              timestamp: new Date(bar.t),
+              open: bar.o,
+              high: bar.h,
+              low: bar.l,
+              close: bar.c,
+              volume: bar.v,
+              trade_count: bar.n,
+              vwap: bar.vw,
+            }))
         );
-        await DatabaseOperations.bulkInsertMarketData(formattedData, tableName);
+
+        if (formattedData.length > 0) {
+          console.log(
+            `Inserting ${formattedData.length} records into ${tableName}`
+          );
+          await DatabaseOperations.bulkInsertMarketData(formattedData, tableName);
+          results.success.push({ timeframe: tf, count: formattedData.length });
+        } else {
+          results.success.push({ timeframe: tf, count: 0 });
+        }
+      } catch (error) {
+        console.error(`Failed to ingest ${tf}:`, error.message);
+        results.failed.push({ timeframe: tf, error: error.message });
+        // Continue with other timeframes
       }
     }
 
     res.json({
-      message: "Data fetch completed",
+      message: "Data ingestion completed",
+      results
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
-    console.error(`Error processing:`, error.message);
+    res.status(500).json({
+      error: error.message,
+      results
+    });
   }
 });
 
-app.get("/ti/:symbol/:timeframe/", async (req, res) => {
-  try {
-    const { symbol, timeframe } = req.params;
-    const indicators = await indicatorsManager.calculateFromDatabase(
-      symbol,
-      timeframe
-    );
-
-    res.json(indicators);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-    console.error(`Error calculating indicators:`, error.message);
-  }
-});
+// Store server instances for graceful shutdown
+let streamService = null;
 
 // Initialize database and WebSocket server on startup
 async function startServer() {
@@ -154,8 +155,8 @@ async function startServer() {
     // Seed default user for development
     await seedDefaultUser();
 
-    // Initialize WebSocket stream server
-    new StreamServer(httpServer);
+    // Initialize WebSocket stream service
+    streamService = new StreamService(httpServer);
 
     httpServer.listen(port, () => {
       console.log(`Server listening on port ${port}`);
@@ -165,5 +166,37 @@ async function startServer() {
     process.exit(1);
   }
 }
+
+// Graceful shutdown handler
+async function gracefulShutdown(signal) {
+  console.log(`${signal} received, shutting down gracefully`);
+
+  try {
+    // Stop all streams
+    if (streamService) {
+      console.log('Stopping active streams...');
+      streamService.handleStopStream();
+    }
+
+    // Close HTTP server
+    httpServer.close(() => {
+      console.log('HTTP server closed');
+      process.exit(0);
+    });
+
+    // Force close after 10s
+    setTimeout(() => {
+      console.error('Forced shutdown after timeout');
+      process.exit(1);
+    }, 10000);
+  } catch (error) {
+    console.error('Error during shutdown:', error);
+    process.exit(1);
+  }
+}
+
+// Handle shutdown signals
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 startServer();

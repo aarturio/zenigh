@@ -10,12 +10,6 @@ export const styles = {
     align: "stretch",
     h: "calc(100vh - 100px)",
   },
-  mainChartArea: {
-    flex: "1",
-    spacing: 4,
-    align: "stretch",
-    h: "100%",
-  },
   priceChartContainer: {
     className: "card",
     flex: "1",

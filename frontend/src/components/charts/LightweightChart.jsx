@@ -6,6 +6,7 @@ const LightweightChart = ({ bars, onHover }) => {
   const chartRef = useRef(null);
   const seriesRef = useRef(null);
 
+  // Initialize chart once
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
@@ -20,12 +21,14 @@ const LightweightChart = ({ bars, onHover }) => {
       .getPropertyValue("--color-primary-30")
       .trim();
 
-    // Create chart with v5 API options
+    // Create chart with initial dimensions
     const chart = createChart(chartContainerRef.current, {
       layout: {
         background: { type: "solid", color: "transparent" },
         textColor: textColor,
       },
+      width: chartContainerRef.current.clientWidth,
+      height: chartContainerRef.current.clientHeight,
       grid: {
         vertLines: { visible: false },
         horzLines: { visible: false },
@@ -51,15 +54,9 @@ const LightweightChart = ({ bars, onHover }) => {
       },
     });
 
-    // Set initial size with padding for time scale
-    // chart.applyOptions({
-    //   width: chartContainerRef.current.clientWidth,
-    //   height: chartContainerRef.current.clientHeight,
-    // });
-
     chartRef.current = chart;
 
-    // Create main price series using v5 API
+    // Create main price series
     const lineSeries = chart.addSeries(LineSeries, {
       color: primaryColor,
       lineWidth: 2,
@@ -69,37 +66,37 @@ const LightweightChart = ({ bars, onHover }) => {
 
     seriesRef.current = lineSeries;
 
-    // Handle resize using ResizeObserver (watches container, not window)
-    const handleResize = () => {
+    // Watch container for size changes using ResizeObserver
+    const resizeObserver = new ResizeObserver(() => {
       if (chartContainerRef.current && chartRef.current) {
         chart.applyOptions({
           width: chartContainerRef.current.clientWidth,
           height: chartContainerRef.current.clientHeight,
         });
       }
-    };
+    });
 
-    // Watch the container itself for size changes
-    const resizeObserver = new ResizeObserver(handleResize);
     resizeObserver.observe(chartContainerRef.current);
 
     // Subscribe to crosshair move for hover effect
-    chart.subscribeCrosshairMove((param) => {
+    const crosshairHandler = (param) => {
       if (param.time && param.seriesData && param.seriesData.get(lineSeries)) {
         const price = param.seriesData.get(lineSeries).value;
         onHover?.(price);
       } else {
         onHover?.(null);
       }
-    });
+    };
+
+    chart.subscribeCrosshairMove(crosshairHandler);
 
     return () => {
       resizeObserver.disconnect();
       chart.remove();
     };
-  }, []);
+  }, []); // Initialize once, never recreate
 
-  // Update chart data when bars change
+  // Update data when bars change
   useEffect(() => {
     if (!seriesRef.current || !bars || bars.length === 0) return;
 
@@ -111,11 +108,9 @@ const LightweightChart = ({ bars, onHover }) => {
 
     seriesRef.current.setData(chartData);
 
-    // Auto-fit content and scroll to show latest data with padding
-    if (chartRef.current) {
+    // Fit content to show all data
+    if (chartRef.current && chartData.length > 0) {
       chartRef.current.timeScale().fitContent();
-      const timeScale = chartRef.current.timeScale();
-      timeScale.scrollToPosition(5, false); // Show some padding on the right
     }
   }, [bars]);
 
