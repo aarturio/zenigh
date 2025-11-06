@@ -1,5 +1,5 @@
 import UserOperations from "../db/user-operations.js";
-import AuthUtils from "../utils/auth-utils.js";
+import AuthUtils from "./utils.js";
 
 // Middleware to verify JWT token
 export const authenticateToken = async (req, res, next) => {

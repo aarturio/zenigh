@@ -1,9 +1,11 @@
-import WebSocketClient from "../websocket-client.js";
+import WebSocketClient from "./websocket-client.js";
 
 class StreamController {
   constructor() {
     this.wsClient = null;
     this.isStreaming = false;
+    this.currentTicker = null; // Add ticker tracking
+    this.currentTimeframe = null; // Add timeframe tracking
   }
 
   /**
@@ -11,7 +13,7 @@ class StreamController {
    * @param {string} ticker - Stock symbol
    * @param {Function} onBarReceived - Callback for new bar data
    */
-  async start(ticker, onBarReceived) {
+  async start(ticker, onBarReceived, timeframe = "1Min") {
     if (this.isStreaming) {
       console.log("Stream already running");
       return;
@@ -21,13 +23,18 @@ class StreamController {
       throw new Error("Ticker is required");
     }
 
-    console.log("Starting stream...");
+    // Enable test mode for FAKEPACA (works 24/7, even after market hours)
+    const isTestMode = ticker.toUpperCase() === "FAKEPACA";
 
+    console.log(`Starting stream... ${isTestMode ? "(TEST MODE)" : "(LIVE)"}`);
+
+    this.currentTicker = ticker;
+    this.currentTimeframe = timeframe;
     this.wsClient = new WebSocketClient(
       process.env.ALPACA_API_KEY,
       process.env.ALPACA_SECRET_KEY,
       "iex",
-      false // Use real stream (not test)
+      isTestMode
     );
 
     this.wsClient.onAuthenticated = () => {
@@ -58,18 +65,32 @@ class StreamController {
     console.log("Stopping stream...");
 
     if (this.wsClient) {
-      this.wsClient.disconnect();
-      this.wsClient = null;
+      // First unsubscribe, THEN disconnect
+      const currentTicker = this.currentTicker;
+      if (currentTicker && this.wsClient.isAuthenticated) {
+        this.wsClient.unsubscribe({ bars: [currentTicker] });
+      }
+
+      // Give unsubscribe a moment to send
+      setTimeout(() => {
+        this.wsClient.disconnect();
+        this.wsClient = null;
+      }, 100);
     }
 
     this.isStreaming = false;
+    this.currentTicker = null;
   }
 
   /**
    * Get current streaming status
    */
   getStatus() {
-    return { isStreaming: this.isStreaming };
+    return {
+      isStreaming: this.isStreaming,
+      ticker: this.currentTicker,
+      timeframe: this.currentTimeframe,
+    };
   }
 }
 

@@ -1,5 +1,5 @@
 import db from "./connection.js";
-import AuthUtils from "../utils/auth-utils.js";
+import { AuthUtils } from "../auth/index.js";
 
 class UserOperations {
   // Register a new user

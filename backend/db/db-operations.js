@@ -94,6 +94,15 @@ class DatabaseOperations {
     return await db(tableName).where({ symbol }).orderBy("timestamp", "asc");
   }
 
+  // Get recent market data with limit (optimized for streaming)
+  static async getRecentMarketData(symbol, tableName, limit = 500) {
+    return await db(tableName)
+      .where({ symbol })
+      .orderBy("timestamp", "desc")
+      .limit(limit)
+      .then(rows => rows.reverse()); // Reverse to get chronological order
+  }
+
   /**
    * Get recent bars for indicator calculations
    * @param {string} symbol - Stock symbol
