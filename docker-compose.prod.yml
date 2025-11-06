@@ -17,8 +17,11 @@ services:
       - DEFAULT_USER_LASTNAME=${DEFAULT_USER_LASTNAME}
       - PORT=3000
       - NODE_ENV=production
+      - TA_SERVICE_URL=http://ta-service:8001
     depends_on:
       db:
+        condition: service_healthy
+      ta-service:
         condition: service_healthy
     restart: unless-stopped
 
@@ -60,8 +63,8 @@ services:
       - frontend
     restart: unless-stopped
 
-  talib-service:
-    build: ./talib-service
+  ta-service:
+    build: ./ta
     expose:
       - "8001"
     restart: unless-stopped
