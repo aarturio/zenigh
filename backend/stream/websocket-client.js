@@ -9,11 +9,6 @@ class WebSocketClient {
     this.ws = null;
     this.isAuthenticated = false;
     this.subscriptions = new Set();
-    this.reconnectAttempts = 0;
-    this.maxReconnectAttempts = 5;
-    this.reconnectDelay = 1000;
-    this.onConnectionLost = () => {}; // Callback for StreamController
-    this.shouldReconnect = true;
   }
 
   connect() {
@@ -28,7 +23,6 @@ class WebSocketClient {
           this.isTest ? "(TEST)" : `(${this.feed.toUpperCase()})`
         }`
       );
-      this.reconnectAttempts = 0; // Reset on successful connection
       this.authenticate();
     });
 
@@ -48,24 +42,6 @@ class WebSocketClient {
     this.ws.on("close", (code, reason) => {
       console.log(`WebSocket closed: ${code} ${reason}`);
       this.isAuthenticated = false;
-
-      // Notify controller
-      this.onConnectionLost();
-
-      // Auto-reconnect with exponential backoff
-      if (this.shouldReconnect && this.reconnectAttempts < this.maxReconnectAttempts) {
-        const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts);
-        console.log(
-          `Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts + 1}/${this.maxReconnectAttempts})`
-        );
-
-        setTimeout(() => {
-          this.reconnectAttempts++;
-          this.connect();
-        }, delay);
-      } else if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-        console.error("Max reconnection attempts reached");
-      }
     });
   }
 
@@ -97,6 +73,7 @@ class WebSocketClient {
           break;
         case "error":
           console.error("Error from server:", msg.msg);
+
           break;
         case "b": // Bar
           try {
@@ -193,7 +170,6 @@ class WebSocketClient {
   }
 
   disconnect() {
-    this.shouldReconnect = false; // Disable auto-reconnect on manual disconnect
     if (this.ws) {
       this.ws.close();
     }

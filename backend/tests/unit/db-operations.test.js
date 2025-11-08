@@ -69,7 +69,7 @@ describe("DatabaseOperations - getMarketData", () => {
   });
 });
 
-describe("DatabaseOperations - bulkInsertMarketData", () => {
+describe("DatabaseOperations - insertMarketData", () => {
   let mockQueryBuilder;
   let mockTrx;
 
@@ -114,7 +114,7 @@ describe("DatabaseOperations - bulkInsertMarketData", () => {
     mockQueryBuilder.ignore.mockResolvedValue(undefined);
 
     // Act
-    await DatabaseOperations.bulkInsertMarketData(data, tableName);
+    await DatabaseOperations.insertMarketData(data, tableName);
 
     // Assert: Check that insert was called correctly
     expect(mockQueryBuilder.insert).toHaveBeenCalledWith(data);
@@ -131,7 +131,7 @@ describe("DatabaseOperations - bulkInsertMarketData", () => {
     const tableName = "market_data_1h";
 
     // Act
-    await DatabaseOperations.bulkInsertMarketData(data, tableName);
+    await DatabaseOperations.insertMarketData(data, tableName);
 
     // Assert: Should complete without errors, no inserts
     expect(mockQueryBuilder.insert).not.toHaveBeenCalled();
@@ -155,7 +155,7 @@ describe("DatabaseOperations - bulkInsertMarketData", () => {
     mockQueryBuilder.ignore.mockResolvedValue(undefined);
 
     // Act
-    await DatabaseOperations.bulkInsertMarketData(data, tableName);
+    await DatabaseOperations.insertMarketData(data, tableName);
 
     // Assert: Transaction should be used
     expect(db.transaction).toHaveBeenCalled();

@@ -53,6 +53,32 @@ class DatabaseOperations {
         );
       }
 
+      // Create technical analysis table
+      await db.raw(`
+        CREATE TABLE IF NOT EXISTS technical_analysis (
+          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+          symbol VARCHAR NOT NULL,
+          timestamp TIMESTAMPTZ NOT NULL,
+          timeframe VARCHAR NOT NULL,
+          indicators JSONB NOT NULL,
+          signals JSONB,
+          calculated_at TIMESTAMPTZ DEFAULT NOW(),
+          data_points_used INTEGER,
+          UNIQUE(symbol, timestamp, timeframe)
+        )
+      `);
+
+      // Create indexes for technical analysis
+      await db.raw(
+        `CREATE INDEX IF NOT EXISTS idx_ta_symbol_timeframe ON technical_analysis(symbol, timeframe)`
+      );
+      await db.raw(
+        `CREATE INDEX IF NOT EXISTS idx_ta_timestamp ON technical_analysis(timestamp DESC)`
+      );
+      await db.raw(
+        `CREATE INDEX IF NOT EXISTS idx_ta_lookup ON technical_analysis(symbol, timeframe, timestamp DESC)`
+      );
+
       console.log("Database schema initialized successfully");
     } catch (error) {
       console.error("Schema initialization failed:", error);
@@ -60,8 +86,8 @@ class DatabaseOperations {
     }
   }
 
-  // Bulk insert market data with batching (handles large datasets)
-  static async bulkInsertMarketData(dataArray, tableName) {
+  // Insert market data with batching (handles large datasets)
+  static async insertMarketData(dataArray, tableName) {
     const BATCH_SIZE = 5000;
     let totalInserted = 0;
 
@@ -128,76 +154,6 @@ class DatabaseOperations {
   }
 
   /**
-   * Get recent bars formatted for indicators
-   * @param {string} symbol - Stock symbol
-   * @param {string} timeframe - Timeframe (1T, 5T, 1H, 1D)
-   * @param {number} limit - Number of bars to fetch (default: 200)
-   * @returns {Promise<Object>} Market data formatted for indicators
-   */
-  static async getRecentBarsForIndicators(symbol, timeframe, limit = 200) {
-    const rows = await this.getRecentBars(symbol, timeframe, limit);
-
-    if (rows.length === 0) {
-      throw new Error(`No data found for ${symbol} on ${timeframe} timeframe`);
-    }
-
-    // Transform to indicator format
-    return {
-      close: rows.map(r => parseFloat(r.close)),
-      high: rows.map(r => parseFloat(r.high)),
-      low: rows.map(r => parseFloat(r.low)),
-      volume: rows.map(r => parseInt(r.volume)),
-      timestamp: rows.map(r => r.timestamp),
-      open: rows.map(r => parseFloat(r.open)), // Optional but useful
-      vwap: rows.map(r => r.vwap ? parseFloat(r.vwap) : null), // Optional
-    };
-  }
-
-  /**
-   * Get the latest bar for a symbol
-   * @param {string} symbol - Stock symbol
-   * @param {string} timeframe - Timeframe
-   * @returns {Promise<Object>} Latest bar
-   */
-  static async getLatestBar(symbol, timeframe) {
-    const tableName = TABLE_MAP[timeframe];
-
-    if (!tableName) {
-      throw new Error(`Invalid timeframe: ${timeframe}`);
-    }
-
-    const row = await db(tableName)
-      .where({ symbol })
-      .orderBy("timestamp", "desc")
-      .first();
-
-    return row;
-  }
-
-  /**
-   * Get bars within a date range
-   * @param {string} symbol - Stock symbol
-   * @param {string} timeframe - Timeframe
-   * @param {Date} startDate - Start date
-   * @param {Date} endDate - End date
-   * @returns {Promise<Array>} Bars in date range
-   */
-  static async getBarsByDateRange(symbol, timeframe, startDate, endDate) {
-    const tableName = TABLE_MAP[timeframe];
-
-    if (!tableName) {
-      throw new Error(`Invalid timeframe: ${timeframe}`);
-    }
-
-    const rows = await db(tableName)
-      .where({ symbol })
-      .whereBetween("timestamp", [startDate, endDate])
-      .orderBy("timestamp", "asc");
-
-    return rows;
-  }
-
-  /**
    * Check if we have enough data for indicators
    * @param {string} symbol - Stock symbol
    * @param {string} timeframe - Timeframe
@@ -217,6 +173,42 @@ class DatabaseOperations {
       .first();
 
     return parseInt(count.count) >= requiredBars;
+  }
+
+  /**
+   * Save technical analysis results
+   * @param {Array} analysisData - Array of analysis objects
+   */
+  static async saveTechnicalAnalysis(analysisData) {
+    const BATCH_SIZE = 1000;
+    let totalInserted = 0;
+
+    await db.transaction(async (trx) => {
+      for (let i = 0; i < analysisData.length; i += BATCH_SIZE) {
+        const batch = analysisData.slice(i, i + BATCH_SIZE);
+
+        await trx("technical_analysis")
+          .insert(
+            batch.map((item) => ({
+              symbol: item.symbol,
+              timeframe: item.timeframe,
+              timestamp: item.timestamp,
+              indicators: JSON.stringify(item.indicators),
+              signals: item.signals ? JSON.stringify(item.signals) : null,
+              data_points_used: item.dataPointsUsed,
+            }))
+          )
+          .onConflict(["symbol", "timestamp", "timeframe"])
+          .merge();
+
+        totalInserted += batch.length;
+        console.log(
+          `Saved TA batch: ${batch.length} records (${totalInserted}/${analysisData.length} total)`
+        );
+      }
+    });
+
+    console.log(`Bulk saved ${totalInserted} technical analysis records`);
   }
 }
 

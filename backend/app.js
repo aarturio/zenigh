@@ -8,7 +8,8 @@ import DatabaseOperations from "./db/db-operations.js";
 import UserOperations from "./db/user-operations.js";
 import seedDefaultUser from "./db/seed.js";
 import { authenticateToken } from "./auth/index.js";
-import { TABLE_MAP } from "./config.js";
+import { TABLE_MAP, TICKERS } from "./config.js";
+import IndicatorService from "./indicators/indicator-service.js";
 
 const app = express();
 const port = 3000;
@@ -120,7 +121,7 @@ app.get("/ingest/:startDate/:endDate", authenticateToken, async (req, res) => {
           console.log(
             `Inserting ${formattedData.length} records into ${tableName}`
           );
-          await DatabaseOperations.bulkInsertMarketData(formattedData, tableName);
+          await DatabaseOperations.insertMarketData(formattedData, tableName);
           results.success.push({ timeframe: tf, count: formattedData.length });
         } else {
           results.success.push({ timeframe: tf, count: 0 });
@@ -132,9 +133,29 @@ app.get("/ingest/:startDate/:endDate", authenticateToken, async (req, res) => {
       }
     }
 
+    // Calculate technical indicators for all tickers and timeframes
+    console.log("Starting technical indicator calculations...");
+    const indicatorResults = { success: [], failed: [] };
+
+    for (const ticker of TICKERS) {
+      for (const tf in TABLE_MAP) {
+        try {
+          await IndicatorService.calculateAndSave(ticker, tf);
+          indicatorResults.success.push({ ticker, timeframe: tf });
+        } catch (error) {
+          console.error(`Failed to calculate indicators for ${ticker} (${tf}):`, error.message);
+          indicatorResults.failed.push({ ticker, timeframe: tf, error: error.message });
+          // Continue with other tickers/timeframes
+        }
+      }
+    }
+
+    console.log("Technical indicator calculations completed");
+
     res.json({
-      message: "Data ingestion completed",
-      results
+      message: "Data ingestion and indicator calculation completed",
+      results,
+      indicators: indicatorResults
     });
   } catch (error) {
     res.status(500).json({

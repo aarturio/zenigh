@@ -101,10 +101,17 @@ const LightweightChart = ({ bars, onHover }) => {
     if (!seriesRef.current || !bars || bars.length === 0) return;
 
     // Transform data to lightweight-charts format
-    const chartData = bars.map((bar) => ({
-      time: new Date(bar.time).getTime() / 1000, // Convert to Unix timestamp
-      value: bar.closePrice,
-    }));
+    const chartData = bars.map((bar) => {
+      // Convert millisecond timestamp to seconds (required by Lightweight Charts)
+      const timestamp = typeof bar.time === 'number'
+        ? bar.time / 1000
+        : new Date(bar.time).getTime() / 1000;
+
+      return {
+        time: timestamp,
+        value: bar.closePrice,
+      };
+    });
 
     seriesRef.current.setData(chartData);
 
