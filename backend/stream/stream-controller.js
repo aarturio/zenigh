@@ -65,17 +65,15 @@ class StreamController {
     console.log("Stopping stream...");
 
     if (this.wsClient) {
-      // First unsubscribe, THEN disconnect
+      // First unsubscribe, THEN disconnect immediately
       const currentTicker = this.currentTicker;
       if (currentTicker && this.wsClient.isAuthenticated) {
         this.wsClient.unsubscribe({ bars: [currentTicker] });
       }
 
-      // Give unsubscribe a moment to send
-      setTimeout(() => {
-        this.wsClient.disconnect();
-        this.wsClient = null;
-      }, 100);
+      // Disconnect immediately (not async) to prevent connection limit issues
+      this.wsClient.disconnect();
+      this.wsClient = null;
     }
 
     this.isStreaming = false;

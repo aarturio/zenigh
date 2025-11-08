@@ -25,17 +25,19 @@ class StreamService {
 
   async handleStartStream(ticker, timeframe) {
     try {
-      // Check if already streaming this ticker
+      // Check if already streaming this exact ticker and timeframe
       const status = this.streamController.getStatus();
-      if (status.isStreaming && status.ticker === ticker) {
-        console.log(`Already streaming ${ticker}, ignoring duplicate request`);
+      if (status.isStreaming && status.ticker === ticker && status.timeframe === timeframe) {
+        console.log(`Already streaming ${ticker} (${timeframe}), ignoring duplicate request`);
         return;
       }
 
-      // Stop existing stream if different ticker
-      if (status.isStreaming && status.ticker !== ticker) {
-        console.log(`Switching from ${status.ticker} to ${ticker}`);
+      // Stop existing stream if different ticker or timeframe
+      if (status.isStreaming) {
+        console.log(`Switching from ${status.ticker} (${status.timeframe}) to ${ticker} (${timeframe})`);
         this.handleStopStream();
+        // Wait briefly for connection to fully close before starting new one
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
       // 1. Load recent historical data (limited for performance)
       const historicalData = await this.historicalLoader.loadRecent(

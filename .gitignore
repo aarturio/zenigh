@@ -23,3 +23,8 @@ dist-ssr
 planning/
 *.pem
 .venv
+dev/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd

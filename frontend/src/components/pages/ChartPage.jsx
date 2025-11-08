@@ -68,7 +68,7 @@ function ChartPage() {
 
       // Transform the data to match your chart format
       const transformedData = barData.map((bar) => ({
-        time: bar.timestamp, // Keep raw timestamp for Lightweight Charts
+        time: bar.timestamp,
         symbol: bar.symbol,
         closePrice: bar.closePrice,
       }));
@@ -80,7 +80,7 @@ function ChartPage() {
       const barData = data.bar || data;
 
       const newBar = {
-        time: barData.timestamp, // Keep raw timestamp for Lightweight Charts
+        time: barData.timestamp,
         symbol: barData.symbol,
         closePrice: barData.closePrice,
       };
