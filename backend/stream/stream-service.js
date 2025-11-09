@@ -1,8 +1,10 @@
-import SocketManager from "./socket-manager.js";
-import StreamController from "./stream-controller.js";
+import DatabaseOperations from "../db/db-operations.js";
+
 import DataTransformer from "./data-transformer.js";
 import HistoricalLoader from "./historical-loader.js";
-import DatabaseOperations from "../db/db-operations.js";
+import SocketManager from "./socket-manager.js";
+import StreamController from "./stream-controller.js";
+
 
 class StreamService {
   constructor(httpServer) {
@@ -40,7 +42,7 @@ class StreamService {
         await new Promise(resolve => setTimeout(resolve, 500));
       }
       // 1. Load recent historical data (limited for performance)
-      const historicalData = await this.historicalLoader.loadRecent(
+      const historicalData = await this.historicalLoader.load(
         ticker,
         timeframe,
         500 // Limit to last 500 bars for better performance

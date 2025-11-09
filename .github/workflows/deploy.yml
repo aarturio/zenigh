@@ -40,8 +40,7 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           DEFAULT_USER_EMAIL: ${{ secrets.DEFAULT_USER_EMAIL }}
           DEFAULT_USER_PASSWORD: ${{ secrets.DEFAULT_USER_PASSWORD }}
-          DEFAULT_USER_FIRSTNAME: ${{ secrets.DEFAULT_USER_FIRSTNAME }}
-          DEFAULT_USER_LASTNAME: ${{ secrets.DEFAULT_USER_LASTNAME }}
+          DEFAULT_USER_NAME: ${{ secrets.DEFAULT_USER_NAME }}
         run: |
           # Create .env file from secrets
           cat > /tmp/zenigh.env << EOF
@@ -54,8 +53,8 @@ jobs:
           VITE_BACKEND_URL=https://zenigh.ai/api
           DEFAULT_USER_EMAIL=$DEFAULT_USER_EMAIL
           DEFAULT_USER_PASSWORD=$DEFAULT_USER_PASSWORD
-          DEFAULT_USER_FIRSTNAME=$DEFAULT_USER_FIRSTNAME
-          DEFAULT_USER_LASTNAME=$DEFAULT_USER_LASTNAME
+          DEFAULT_USER_NAME=$DEFAULT_USER_NAME
+          FRONTEND_URL=https://zenigh.ai
           EOF
 
           # Copy .env to EC2

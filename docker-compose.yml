@@ -14,10 +14,10 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - DEFAULT_USER_EMAIL=${DEFAULT_USER_EMAIL}
       - DEFAULT_USER_PASSWORD=${DEFAULT_USER_PASSWORD}
-      - DEFAULT_USER_FIRSTNAME=${DEFAULT_USER_FIRSTNAME}
-      - DEFAULT_USER_LASTNAME=${DEFAULT_USER_LASTNAME}
+      - DEFAULT_USER_NAME=${DEFAULT_USER_NAME}
       - PORT=3000
       - TA_SERVICE_URL=http://ta-service:8001
+      - FRONTEND_URL=http://localhost:5173
     depends_on:
       db:
         condition: service_healthy

@@ -10,10 +10,17 @@ import {
   Portal,
   CloseButton,
 } from "@chakra-ui/react";
-import { useAuth } from "../../contexts/AuthContext";
+import { authClient } from "../../../lib/auth-client";
+import { useNavigate } from "react-router-dom";
 
 const MenuDrawer = ({ open, onClose }) => {
-  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await authClient.signOut();
+    onClose();
+    navigate("/");
+  };
   return (
     <Box>
       {/* Drawer */}
@@ -30,7 +37,6 @@ const MenuDrawer = ({ open, onClose }) => {
               <Drawer.Body pt={20}>
                 <VStack align="stretch" spacing={4}>
                   <Button
-                    onClick={logout}
                     className="btn-fill-left-to-right"
                     size="sm"
                     fontSize="sm"

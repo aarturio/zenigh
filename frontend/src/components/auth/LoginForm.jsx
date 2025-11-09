@@ -1,26 +1,31 @@
 import { useState } from "react";
 import { Box, Button, Input, Text } from "@chakra-ui/react";
-import { useAuth } from "../../contexts/AuthContext";
+import { authClient } from "../../../lib/auth-client";
+import { useNavigate } from "react-router-dom";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    const result = await login(email, password);
+    const { data, error: authError } = await authClient.signIn.email({
+      email,
+      password,
+    });
 
-    if (!result.success) {
-      setError(result.error);
+    if (authError) {
+      setError(authError.message || "Login failed");
+      setLoading(false);
+    } else {
+      navigate("/chart");
     }
-
-    setLoading(false);
   };
 
   return (

@@ -41,9 +41,7 @@ function ChartPage() {
     const BACKEND_URL =
       import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
     socketRef.current = io(BACKEND_URL, {
-      auth: {
-        token: localStorage.getItem('token')
-      }
+      withCredentials: true, // Send cookies with WebSocket connection
     });
 
     socketRef.current.on("connect", () => {
@@ -52,10 +50,6 @@ function ChartPage() {
 
     socketRef.current.on("connect_error", (error) => {
       console.error("Connection failed:", error.message);
-      if (error.message.includes("Authentication")) {
-        console.error("Authentication failed - please log in again");
-        // Optionally redirect to login or show error to user
-      }
     });
 
     socketRef.current.on("disconnect", () => {
