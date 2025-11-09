@@ -1,41 +1,13 @@
 import { Server } from "socket.io";
-import { AuthUtils } from "../auth/index.js";
 
 class SocketManager {
   constructor(httpServer) {
     this.io = new Server(httpServer, {
       cors: {
-        origin: "*",
+        origin: process.env.FRONTEND_URL || "http://localhost:5173",
+        credentials: true, // Allow cookies
         methods: ["GET", "POST"],
       },
-    });
-
-    // Add authentication middleware
-    this.io.use(async (socket, next) => {
-      try {
-        const token = socket.handshake.auth.token;
-
-        // Skip auth in development if no token provided
-        if (!token) {
-          if (process.env.NODE_ENV === 'development') {
-            console.log('⚠️  No token provided - allowing connection in development mode');
-            socket.user = { userId: 'dev-user', email: 'dev@localhost' };
-            return next();
-          }
-          throw new Error("Authentication required");
-        }
-
-        // Verify token using existing auth module
-        const decoded = AuthUtils.verifyJWT(token);
-        if (!decoded) {
-          throw new Error("Invalid token");
-        }
-        socket.user = decoded;
-        next();
-      } catch (error) {
-        console.error("Socket authentication failed:", error);
-        next(new Error("Authentication failed"));
-      }
     });
 
     this.connectedClients = new Set();

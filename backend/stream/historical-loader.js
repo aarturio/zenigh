@@ -9,9 +9,10 @@ class HistoricalLoader {
    * Load historical data for a ticker/timeframe
    * @param {string} ticker - Stock symbol
    * @param {string} timeframe - Timeframe (e.g., '1Min', '1Day')
+   * @param {number|null} limit - Maximum number of bars to load (default: 10000)
    * @returns {Promise<Array>} Historical bars
    */
-  async load(ticker, timeframe) {
+  async load(ticker, timeframe, limit = 10000) {
     this.validateParameters(ticker, timeframe);
     const tableName = TABLE_MAP[timeframe];
 
@@ -20,7 +21,8 @@ class HistoricalLoader {
     try {
       const marketData = await this.dbOperations.getMarketData(
         ticker,
-        tableName
+        tableName,
+        limit
       );
 
       console.log(`Loaded ${marketData.length} historical bars`);
@@ -31,33 +33,6 @@ class HistoricalLoader {
     }
   }
 
-  /**
-   * Load recent historical data (optimized for streaming)
-   * @param {string} ticker - Stock symbol
-   * @param {string} timeframe - Timeframe (e.g., '1Min', '1Day')
-   * @param {number} limit - Maximum number of bars to load (default: 500)
-   * @returns {Promise<Array>} Recent historical bars
-   */
-  async loadRecent(ticker, timeframe, limit = 500) {
-    this.validateParameters(ticker, timeframe);
-    const tableName = TABLE_MAP[timeframe];
-
-    console.log(`Loading last ${limit} bars for ${ticker} (${timeframe})...`);
-
-    try {
-      const marketData = await this.dbOperations.getRecentMarketData(
-        ticker,
-        tableName,
-        limit
-      );
-
-      console.log(`Loaded ${marketData.length} historical bars`);
-      return marketData;
-    } catch (error) {
-      console.error("Error loading recent historical data:", error);
-      throw error;
-    }
-  }
 
   /**
    * Validate parameters
@@ -85,7 +60,7 @@ class HistoricalLoader {
    * @returns {Promise<boolean>}
    */
   async hasData(ticker, timeframe) {
-    const data = await this.loadRecent(ticker, timeframe, 1);
+    const data = await this.load(ticker, timeframe, 1);
     return data.length > 0;
   }
 }

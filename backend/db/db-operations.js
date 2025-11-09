@@ -1,5 +1,6 @@
 import { TABLE_MAP } from "../config.js";
-import db from "./connection.js";
+
+import db from "./db-connection.js";
 
 class DatabaseOperations {
   // Initialize database schema
@@ -8,21 +9,72 @@ class DatabaseOperations {
       // Enable UUID extension
       await db.raw('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
 
-      // Create users table
+      // Create user table
       await db.raw(`
-        CREATE TABLE IF NOT EXISTS users (
-          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        CREATE TABLE IF NOT EXISTS "user" (
+          id VARCHAR(255) PRIMARY KEY,
+          name VARCHAR(255) NOT NULL,
           email VARCHAR(255) UNIQUE NOT NULL,
-          password_hash VARCHAR(255) NOT NULL,
-          first_name VARCHAR(100),
-          last_name VARCHAR(100),
-          created_at TIMESTAMPTZ DEFAULT NOW(),
-          updated_at TIMESTAMPTZ DEFAULT NOW()
+          "emailVerified" BOOLEAN NOT NULL DEFAULT false,
+          image VARCHAR(255),
+          "createdAt" TIMESTAMPTZ DEFAULT NOW(),
+          "updatedAt" TIMESTAMPTZ DEFAULT NOW()
         )
       `);
 
-      // Create users table index
-      await db.raw(`CREATE INDEX IF NOT EXISTS ix_users_email ON users(email)`);
+      // Create user table index
+      await db.raw(`CREATE INDEX IF NOT EXISTS ix_user_email ON "user"(email)`);
+
+      // Create session table
+      await db.raw(`
+        CREATE TABLE IF NOT EXISTS "session" (
+          id VARCHAR(255) PRIMARY KEY,
+          "userId" VARCHAR(255) NOT NULL,
+          token VARCHAR(255) UNIQUE NOT NULL,
+          "expiresAt" TIMESTAMPTZ NOT NULL,
+          "ipAddress" VARCHAR(255),
+          "userAgent" VARCHAR(255),
+          "createdAt" TIMESTAMPTZ DEFAULT NOW(),
+          "updatedAt" TIMESTAMPTZ DEFAULT NOW(),
+          CONSTRAINT fk_session_user
+            FOREIGN KEY("userId")
+              REFERENCES "user"(id) ON DELETE CASCADE
+        )
+      `);
+
+      // Create account table
+      await db.raw(`
+        CREATE TABLE IF NOT EXISTS "account" (
+          id VARCHAR(255) PRIMARY KEY,
+          "userId" VARCHAR(255) NOT NULL,
+          "accountId" VARCHAR(255) NOT NULL,
+          "providerId" VARCHAR(255) NOT NULL,
+          "accessToken" TEXT,
+          "refreshToken" TEXT,
+          "accessTokenExpiresAt" TIMESTAMPTZ,
+          "refreshTokenExpiresAt" TIMESTAMPTZ,
+          scope VARCHAR(255),
+          "idToken" TEXT,
+          password TEXT,
+          "createdAt" TIMESTAMPTZ DEFAULT NOW(),
+          "updatedAt" TIMESTAMPTZ DEFAULT NOW(),
+          CONSTRAINT fk_account_user
+            FOREIGN KEY("userId")
+              REFERENCES "user"(id) ON DELETE CASCADE
+        )
+      `);
+
+      // Create verification table
+      await db.raw(`
+        CREATE TABLE IF NOT EXISTS "verification" (
+          id VARCHAR(255) PRIMARY KEY,
+          identifier VARCHAR(255) NOT NULL,
+          value VARCHAR(255) NOT NULL,
+          "expiresAt" TIMESTAMPTZ NOT NULL,
+          "createdAt" TIMESTAMPTZ DEFAULT NOW(),
+          "updatedAt" TIMESTAMPTZ DEFAULT NOW()
+        )
+      `);
 
       // Create market data tables
       for (const tableName of Object.values(TABLE_MAP)) {
@@ -115,18 +167,24 @@ class DatabaseOperations {
     );
   }
 
-  // Get market data by symbol and date range
-  static async getMarketData(symbol, tableName) {
-    return await db(tableName).where({ symbol }).orderBy("timestamp", "asc");
-  }
-
-  // Get recent market data with limit (optimized for streaming)
-  static async getRecentMarketData(symbol, tableName, limit = 500) {
-    return await db(tableName)
+  /**
+   * Get market data by symbol with optional limit
+   * @param {string} symbol - Stock symbol
+   * @param {string} tableName - Table name to query
+   * @param {number|null} limit - Maximum number of bars to fetch (default: 10000 for safety)
+   * @returns {Promise<Array>} Array of OHLCV bars in chronological order (oldest to newest)
+   */
+  static async getMarketData(symbol, tableName, limit = 10000) {
+    const query = db(tableName)
       .where({ symbol })
-      .orderBy("timestamp", "desc")
-      .limit(limit)
-      .then(rows => rows.reverse()); // Reverse to get chronological order
+      .orderBy("timestamp", "desc");
+
+    if (limit !== null && limit !== undefined) {
+      query.limit(limit);
+    }
+
+    const rows = await query;
+    return rows.reverse(); // Return in chronological order (oldest to newest)
   }
 
   /**
@@ -140,7 +198,11 @@ class DatabaseOperations {
     const tableName = TABLE_MAP[timeframe];
 
     if (!tableName) {
-      throw new Error(`Invalid timeframe: ${timeframe}. Valid options: ${Object.keys(TABLE_MAP).join(', ')}`);
+      throw new Error(
+        `Invalid timeframe: ${timeframe}. Valid options: ${Object.keys(
+          TABLE_MAP
+        ).join(", ")}`
+      );
     }
 
     // Fetch recent bars in reverse order, then reverse to get chronological
@@ -169,7 +231,7 @@ class DatabaseOperations {
 
     const count = await db(tableName)
       .where({ symbol })
-      .count('* as count')
+      .count("* as count")
       .first();
 
     return parseInt(count.count) >= requiredBars;

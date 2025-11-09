@@ -1,97 +1,43 @@
-import express from "express";
-import cors from "cors";
 import { createServer } from "http";
-import StreamService from "./stream/stream-service.js";
 
-import coreDataClient from "./ingest/core-data-client.js";
-import DatabaseOperations from "./db/db-operations.js";
-import UserOperations from "./db/user-operations.js";
-import seedDefaultUser from "./db/seed.js";
-import { authenticateToken } from "./auth/index.js";
+
+
+import { toNodeHandler } from "better-auth/node";
+import cors from "cors";
+import express from "express";
+
+import { auth } from "./auth.js";
 import { TABLE_MAP, TICKERS } from "./config.js";
+import DatabaseOperations from "./db/db-operations.js";
+import createDefaultUser from "./db/seed-user.js";
 import IndicatorService from "./indicators/indicator-service.js";
+import coreDataClient from "./ingest/core-data-client.js";
+import StreamService from "./stream/stream-service.js";
 
 const app = express();
 const port = 3000;
 const httpServer = createServer(app);
 
-// Enable CORS for frontend
-app.use(cors());
+// Enable CORS for frontend with credentials support
+app.use(
+  cors({
+    origin: "http://localhost:5173", // Frontend URL
+    credentials: true, // Allow cookies/credentials
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
 // Parse JSON bodies
 app.use(express.json());
+
+app.all("/api/auth/{*any}", toNodeHandler(auth));
 
 app.get("/", (req, res) => {
   res.json({ message: "Market data API server running" });
 });
 
-// Authentication routes
-app.post("/auth/register", async (req, res) => {
-  try {
-    const { email, password, firstName, lastName } = req.body;
-    const result = await UserOperations.registerUser({
-      email,
-      password,
-      firstName,
-      lastName,
-    });
-    res.status(201).json(result);
-  } catch (error) {
-    console.error("Registration error:", error);
-    if (error.message === "User with this email already exists") {
-      return res.status(409).json({ error: error.message });
-    }
-    res.status(400).json({ error: error.message });
-  }
-});
-
-app.post("/auth/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const result = await UserOperations.loginUser({ email, password });
-    res.json(result);
-  } catch (error) {
-    console.error("Login error:", error);
-    if (error.message === "Invalid email or password") {
-      return res.status(401).json({ error: error.message });
-    }
-    res.status(400).json({ error: error.message });
-  }
-});
-
-app.get("/auth/me", authenticateToken, async (req, res) => {
-  res.json({ user: req.user });
-});
-
-// GET endpoint to retrieve market data by symbol
-app.get("/market/data/:symbol/:timeframe", async (req, res) => {
-  try {
-    const { symbol, timeframe } = req.params;
-    const tableName = TABLE_MAP[timeframe];
-
-    // Get market data from database
-    const marketData = await DatabaseOperations.getMarketData(
-      symbol,
-      tableName
-    );
-
-    if (marketData.length === 0) {
-      return res.status(404).json({
-        error: `No data found for symbol ${symbol.toUpperCase()}`,
-      });
-    }
-
-    res.json({
-      symbol: symbol.toUpperCase(),
-      count: marketData.length,
-      data: marketData,
-    });
-  } catch (error) {
-    console.error("Error retrieving market data:", error);
-    res.status(500).json({ error: "Failed to retrieve market data" });
-  }
-});
-
-app.get("/ingest/:startDate/:endDate", authenticateToken, async (req, res) => {
+app.get("/ingest/:startDate/:endDate", async (req, res) => {
   const results = { success: [], failed: [] };
 
   try {
@@ -143,8 +89,15 @@ app.get("/ingest/:startDate/:endDate", authenticateToken, async (req, res) => {
           await IndicatorService.calculateAndSave(ticker, tf);
           indicatorResults.success.push({ ticker, timeframe: tf });
         } catch (error) {
-          console.error(`Failed to calculate indicators for ${ticker} (${tf}):`, error.message);
-          indicatorResults.failed.push({ ticker, timeframe: tf, error: error.message });
+          console.error(
+            `Failed to calculate indicators for ${ticker} (${tf}):`,
+            error.message
+          );
+          indicatorResults.failed.push({
+            ticker,
+            timeframe: tf,
+            error: error.message,
+          });
           // Continue with other tickers/timeframes
         }
       }
@@ -155,12 +108,12 @@ app.get("/ingest/:startDate/:endDate", authenticateToken, async (req, res) => {
     res.json({
       message: "Data ingestion and indicator calculation completed",
       results,
-      indicators: indicatorResults
+      indicators: indicatorResults,
     });
   } catch (error) {
     res.status(500).json({
       error: error.message,
-      results
+      results,
     });
   }
 });
@@ -173,8 +126,8 @@ async function startServer() {
   try {
     await DatabaseOperations.initializeSchema();
 
-    // Seed default user for development
-    await seedDefaultUser();
+    // Default user
+    await createDefaultUser();
 
     // Initialize WebSocket stream service
     streamService = new StreamService(httpServer);
@@ -195,29 +148,29 @@ async function gracefulShutdown(signal) {
   try {
     // Stop all streams
     if (streamService) {
-      console.log('Stopping active streams...');
+      console.log("Stopping active streams...");
       streamService.handleStopStream();
     }
 
     // Close HTTP server
     httpServer.close(() => {
-      console.log('HTTP server closed');
+      console.log("HTTP server closed");
       process.exit(0);
     });
 
     // Force close after 10s
     setTimeout(() => {
-      console.error('Forced shutdown after timeout');
+      console.error("Forced shutdown after timeout");
       process.exit(1);
     }, 10000);
   } catch (error) {
-    console.error('Error during shutdown:', error);
+    console.error("Error during shutdown:", error);
     process.exit(1);
   }
 }
 
 // Handle shutdown signals
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 
 startServer();

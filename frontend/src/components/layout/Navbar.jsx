@@ -1,11 +1,9 @@
 import { Box, Flex, HStack, useDisclosure } from "@chakra-ui/react";
-import { useAuth } from "../../contexts/AuthContext";
 import { Menu } from "lucide-react";
 import SearchBar from "../ui/SearchBar";
 import MenuDrawer from "./MenuDrawer";
 
 const Navbar = ({ ticker, setTicker, onSubmit }) => {
-  const { user, logout } = useAuth();
   const { open, onOpen, onClose } = useDisclosure();
 
   return (
