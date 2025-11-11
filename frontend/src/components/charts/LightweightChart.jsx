@@ -103,9 +103,10 @@ const LightweightChart = ({ bars, onHover }) => {
     // Transform data to lightweight-charts format
     const chartData = bars.map((bar) => {
       // Convert millisecond timestamp to seconds (required by Lightweight Charts)
-      const timestamp = typeof bar.time === 'number'
-        ? bar.time / 1000
-        : new Date(bar.time).getTime() / 1000;
+      const timestamp =
+        typeof bar.time === "number"
+          ? bar.time / 1000
+          : new Date(bar.time).getTime() / 1000;
 
       return {
         time: timestamp,

@@ -1,5 +1,3 @@
-import { TABLE_MAP } from "../config.js";
-
 class HistoricalLoader {
   constructor(dbOperations) {
     this.dbOperations = dbOperations;
@@ -8,20 +6,17 @@ class HistoricalLoader {
   /**
    * Load historical data for a ticker/timeframe
    * @param {string} ticker - Stock symbol
-   * @param {string} timeframe - Timeframe (e.g., '1Min', '1Day')
+   * @param {string} timeframe - Timeframe (1T, 5T, 1H, 1D)
    * @param {number|null} limit - Maximum number of bars to load (default: 10000)
    * @returns {Promise<Array>} Historical bars
    */
   async load(ticker, timeframe, limit = 10000) {
-    this.validateParameters(ticker, timeframe);
-    const tableName = TABLE_MAP[timeframe];
-
     console.log(`Loading historical data for ${ticker} (${timeframe})...`);
 
     try {
       const marketData = await this.dbOperations.getMarketData(
         ticker,
-        tableName,
+        timeframe,
         limit
       );
 
@@ -30,26 +25,6 @@ class HistoricalLoader {
     } catch (error) {
       console.error("Error loading historical data:", error);
       throw error;
-    }
-  }
-
-
-  /**
-   * Validate parameters
-   * @private
-   */
-  validateParameters(ticker, timeframe) {
-    if (!ticker) {
-      throw new Error("Ticker is required");
-    }
-
-    if (!timeframe) {
-      throw new Error("Timeframe is required");
-    }
-
-    const tableName = TABLE_MAP[timeframe];
-    if (!tableName) {
-      throw new Error(`Invalid timeframe: ${timeframe}`);
     }
   }
 

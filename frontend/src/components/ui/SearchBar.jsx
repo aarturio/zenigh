@@ -14,7 +14,6 @@ const SearchBar = ({ ticker, setTicker, onSubmit }) => {
           onChange={(e) => setTicker(e.target.value)}
           w="100%"
           pl={10}
-          placeholder="Search ticker..."
         />
         <Box
           position="absolute"

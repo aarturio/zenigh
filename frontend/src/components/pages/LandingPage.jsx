@@ -26,7 +26,7 @@ const LandingPage = () => {
         <HStack spacing={3}>
           <Button
             {...styles.authButton}
-            className="btn-fill-left-to-right"
+            className="btn-outline-teal"
             onClick={() => setIsLoginOpen(true)}
           >
             Login
@@ -34,7 +34,7 @@ const LandingPage = () => {
 
           <Button
             {...styles.authButton}
-            className="btn-fill-left-to-right"
+            className="btn-outline-teal"
             onClick={() => setIsSignUpOpen(true)}
           >
             Sign Up

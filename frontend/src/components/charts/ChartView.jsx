@@ -32,7 +32,6 @@ function ChartView({
         <Box h="200px">
           <AIOutput output={aiOutput} />
         </Box>
-        ==
       </VStack>
     </Container>
   );
