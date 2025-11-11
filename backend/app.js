@@ -1,7 +1,5 @@
 import { createServer } from "http";
 
-
-
 import { toNodeHandler } from "better-auth/node";
 import cors from "cors";
 import express from "express";
@@ -9,10 +7,11 @@ import express from "express";
 import { auth } from "./auth.js";
 import { TABLE_MAP, TICKERS } from "./config.js";
 import DatabaseOperations from "./db/db-operations.js";
+import DatabaseSchema from "./db/db-schema.js";
 import createDefaultUser from "./db/seed-user.js";
-import IndicatorService from "./indicators/indicator-service.js";
-import coreDataClient from "./ingest/core-data-client.js";
 import StreamService from "./stream/stream-service.js";
+import coreDataClient from "./utils/core-data-client.js";
+import IndicatorService from "./utils/indicator-service.js";
 
 const app = express();
 const port = 3000;
@@ -118,13 +117,29 @@ app.get("/ingest/:startDate/:endDate", async (req, res) => {
   }
 });
 
+app.get("/ta/:symbol/:timeframe", async (req, res) => {
+  try {
+    const { symbol, timeframe } = req.params;
+    const data = await DatabaseOperations.getTechnicalAnalysis(
+      symbol,
+      timeframe
+    );
+    res.json({
+      message: "TA fetched!",
+      data,
+    });
+  } catch (error) {
+    console.error(`Failed to fetch TA data:`, error.message);
+  }
+});
+
 // Store server instances for graceful shutdown
 let streamService = null;
 
 // Initialize database and WebSocket server on startup
 async function startServer() {
   try {
-    await DatabaseOperations.initializeSchema();
+    await DatabaseSchema.initializeSchema();
 
     // Default user
     await createDefaultUser();

@@ -1,9 +1,3 @@
-.App {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
 /* Card Component */
 .card {
   background: var(--color-bg);
@@ -14,28 +8,12 @@
 }
 
 /* Text Colors */
-.text-primary {
-  color: var(--color-text);
-}
-
 .text-secondary {
   color: var(--color-text-70);
 }
 
 .text-tertiary {
   color: var(--color-text-60);
-}
-
-.text-muted {
-  color: var(--color-text-50);
-}
-
-.text-placeholder {
-  color: var(--color-text-40);
-}
-
-.text-teal {
-  color: var(--color-primary);
 }
 
 /* Input Styling */
@@ -61,97 +39,16 @@
 }
 
 /* Button Styles */
-.btn-teal-solid {
-  background: var(--color-primary);
-  color: var(--color-bg);
-  border: none;
-  border-radius: 24px;
-  font-weight: 500;
-  transition: all 0.2s;
-  cursor: pointer;
-}
-
-.btn-teal-solid:hover {
-  background: var(--color-primary);
-  filter: brightness(1.1);
-}
-
-.btn-teal-outline {
+.btn-outline-teal {
   background: transparent;
   color: var(--color-primary);
   border: 1px solid var(--color-primary);
-  border-radius: 24px;
-  font-weight: 500;
-  transition: all 0.2s;
-  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.btn-teal-outline:hover {
-  background: var(--color-primary-10);
-}
-
-/* Fill animation for outline buttons */
-.btn-fill-left-to-right {
-  position: relative;
-  background: transparent;
-  color: var(--color-primary);
-  border: 1px solid var(--color-primary);
-  overflow: hidden;
-  z-index: 1;
-  transition: color 0.4s ease;
-}
-
-.btn-fill-left-to-right::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 0;
-  height: 100%;
+.btn-outline-teal:hover {
   background: var(--color-primary);
-  transition: width 0.4s ease;
-  z-index: -1;
-}
-
-.btn-fill-left-to-right:hover::before {
-  width: 100%;
-}
-
-.btn-fill-left-to-right:hover {
   color: var(--color-bg);
-  border-color: var(--color-primary);
-}
-
-/* Border Utilities */
-.border-teal {
-  border: 1px solid var(--color-primary-20);
-}
-
-.border-teal-light {
-  border: 1px solid var(--color-primary-10);
-}
-
-.border-teal-medium {
-  border: 1px solid var(--color-primary-30);
-}
-
-/* Background Utilities */
-.bg-black {
-  background: var(--color-bg);
-}
-
-.bg-teal-subtle {
-  background: var(--color-primary-10);
-}
-
-.bg-teal-error {
-  background: var(--color-error-10);
-}
-
-/* Divider */
-.divider-subtle {
-  height: 1px;
-  background: var(--color-text-10);
 }
 
 /* Success/Error Messages */
@@ -196,14 +93,4 @@
 .auth-submit-button {
   margin-top: 1rem; /* Extra spacing above submit button */
   align-self: center; /* Center button only */
-}
-
-/* Disable focus outline on Recharts SVG elements */
-.recharts-surface:focus,
-.recharts-surface:active {
-  outline: none !important;
-}
-
-svg.recharts-surface {
-  outline: none !important;
 }

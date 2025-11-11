@@ -1,25 +1,22 @@
 import {
   Box,
-  Flex,
-  Text,
   Button,
-  HStack,
   VStack,
-  useDisclosure,
   Drawer,
   Portal,
   CloseButton,
 } from "@chakra-ui/react";
 import { authClient } from "../../../lib/auth-client";
-import { useNavigate } from "react-router-dom";
 
 const MenuDrawer = ({ open, onClose }) => {
-  const navigate = useNavigate();
-
   const handleLogout = async () => {
-    await authClient.signOut();
-    onClose();
-    navigate("/");
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          window.location.href = "/"; // redirect to login page
+        },
+      },
+    });
   };
   return (
     <Box>
@@ -37,13 +34,14 @@ const MenuDrawer = ({ open, onClose }) => {
               <Drawer.Body pt={20}>
                 <VStack align="stretch" spacing={4}>
                   <Button
-                    className="btn-fill-left-to-right"
+                    className="btn-outline-teal"
                     size="sm"
                     fontSize="sm"
                     fontWeight="500"
                     letterSpacing="wide"
                     borderRadius="24px"
                     w="full"
+                    onClick={handleLogout}
                   >
                     Logout
                   </Button>

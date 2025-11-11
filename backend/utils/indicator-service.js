@@ -31,7 +31,7 @@ class IndicatorService {
       }
 
       // Get OHLCV data from database
-      const bars = await DatabaseOperations.getRecentBars(
+      const bars = await DatabaseOperations.getMarketData(
         symbol,
         timeframe,
         lookback
