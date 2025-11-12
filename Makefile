@@ -39,3 +39,6 @@ stop-instance: ## Stop EC2 instance
 
 ssh-connect: ## Connect to EC2 instance
 	ssh -i zenigh-key.pem ubuntu@$(EC2_INSTANCE_PUBLIC_IP)
+
+make lint:
+	cd backend && npm run lint:fix

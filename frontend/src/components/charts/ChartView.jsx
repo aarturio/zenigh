@@ -7,10 +7,12 @@ import AIOutput from "../ai/AIOutput.jsx";
 
 function ChartView({
   bars,
+  indicators,
   hoveredPrice,
   setHoveredPrice,
   aiOutput,
   handleTimeframeChange,
+  ticker,
 }) {
   return (
     <Container {...styles.container}>
@@ -19,10 +21,14 @@ function ChartView({
         {/* Price Chart Container */}
         <Box {...styles.priceChartContainer}>
           <Box {...styles.priceCardWrapper}>
-            <PriceCard bars={bars} hoveredPrice={hoveredPrice} />
+            <PriceCard bars={bars} hoveredPrice={hoveredPrice} ticker={ticker} />
           </Box>
           <Box {...styles.chartWrapper}>
-            <LightweightChart bars={bars} onHover={setHoveredPrice} />
+            <LightweightChart
+              bars={bars}
+              indicators={indicators}
+              onHover={setHoveredPrice}
+            />
           </Box>
           <Box {...styles.timeframeButtonContainer}>
             <TimeframeButtons onTimeframeChange={handleTimeframeChange} />
