@@ -6,6 +6,7 @@ import ChartView from "../charts/ChartView.jsx";
 
 function ChartPage() {
   const [bars, setBars] = useState([]);
+  const [indicators, setIndicators] = useState({});
   const [ticker, setTicker] = useState("");
   const [activeTicker, setActiveTicker] = useState(null);
   const [hoveredPrice, setHoveredPrice] = useState(null);
@@ -56,30 +57,31 @@ function ChartPage() {
       console.log("Disconnected from server");
     });
 
-    socketRef.current.on("historicalData", (data) => {
-      // Backend now sends {bars, indicators}
-      const barData = data.bars || data;
+    socketRef.current.on("dbBars", (data) => {
+      // Backend sends { bars: [{time, value}], indicators: { sma20: [{time, value}] } }
+      // console.log("=== dbBars event received ===");
+      // console.log("Bars count:", data.bars?.length);
+      // console.log("Latest bar:", data.bars?.[data.bars.length - 1]);
+      // console.log("SMA20 count:", data.indicators?.sma20?.length);
+      // console.log("Latest SMA20:", data.indicators?.sma20?.[data.indicators.sma20.length - 1]);
+      // console.log("Time difference (SMA - Price):",
+      //   (data.indicators?.sma20?.[data.indicators.sma20.length - 1]?.time || 0) -
+      //   (data.bars?.[data.bars.length - 1]?.time || 0)
+      // );
 
-      // Transform the data to match your chart format
-      const transformedData = barData.map((bar) => ({
-        time: bar.timestamp,
-        symbol: bar.symbol,
-        closePrice: bar.closePrice,
-      }));
-      setBars(transformedData);
+      if (data.bars) {
+        setBars(data.bars);
+      }
+      if (data.indicators) {
+        setIndicators(data.indicators);
+      }
     });
 
     socketRef.current.on("bar", (data) => {
-      // Backend now sends {bar, indicators}
-      const barData = data.bar || data;
-
-      const newBar = {
-        time: barData.timestamp,
-        symbol: barData.symbol,
-        closePrice: barData.closePrice,
-      };
-
-      setBars((prevBars) => [...prevBars, newBar]);
+      // Backend sends { bar: {time, value} }
+      if (data.bar) {
+        setBars((prevBars) => [...prevBars, data.bar]);
+      }
     });
 
     return () => {
@@ -102,10 +104,12 @@ function ChartPage() {
       <Navbar ticker={ticker} setTicker={setTicker} onSubmit={handleSubmit} />
       <ChartView
         bars={bars}
+        indicators={indicators}
         hoveredPrice={hoveredPrice}
         setHoveredPrice={setHoveredPrice}
         aiOutput={aiOutput}
         handleTimeframeChange={handleTimeframeChange}
+        ticker={activeTicker}
       />
     </Box>
   );

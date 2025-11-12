@@ -1,15 +1,14 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useLayoutEffect, useRef } from "react";
 import { createChart, LineSeries } from "lightweight-charts";
 
-const LightweightChart = ({ bars, onHover }) => {
+const LightweightChart = ({ bars, indicators, onHover }) => {
   const chartContainerRef = useRef(null);
   const chartRef = useRef(null);
   const seriesRef = useRef(null);
+  const smaSeriesRef = useRef(null);
 
   // Initialize chart once
-  useEffect(() => {
-    if (!chartContainerRef.current) return;
-
+  useLayoutEffect(() => {
     // Read CSS variables for colors (canvas doesn't support CSS vars)
     const rootStyles = getComputedStyle(document.documentElement);
     const primaryColor = rootStyles.getPropertyValue("--color-primary").trim();
@@ -66,9 +65,19 @@ const LightweightChart = ({ bars, onHover }) => {
 
     seriesRef.current = lineSeries;
 
+    // Create SMA indicator series
+    const smaSeries = chart.addSeries(LineSeries, {
+      color: "#f59e0b", // Orange color for SMA
+      lineWidth: 1,
+      lastValueVisible: false,
+      priceLineVisible: false,
+    });
+
+    smaSeriesRef.current = smaSeries;
+
     // Watch container for size changes using ResizeObserver
     const resizeObserver = new ResizeObserver(() => {
-      if (chartContainerRef.current && chartRef.current) {
+      if (chartContainerRef.current) {
         chart.applyOptions({
           width: chartContainerRef.current.clientWidth,
           height: chartContainerRef.current.clientHeight,
@@ -91,6 +100,7 @@ const LightweightChart = ({ bars, onHover }) => {
     chart.subscribeCrosshairMove(crosshairHandler);
 
     return () => {
+      chart.unsubscribeCrosshairMove(crosshairHandler);
       resizeObserver.disconnect();
       chart.remove();
     };
@@ -100,27 +110,27 @@ const LightweightChart = ({ bars, onHover }) => {
   useEffect(() => {
     if (!seriesRef.current || !bars || bars.length === 0) return;
 
-    // Transform data to lightweight-charts format
-    const chartData = bars.map((bar) => {
-      // Convert millisecond timestamp to seconds (required by Lightweight Charts)
-      const timestamp =
-        typeof bar.time === "number"
-          ? bar.time / 1000
-          : new Date(bar.time).getTime() / 1000;
-
-      return {
-        time: timestamp,
-        value: bar.closePrice,
-      };
-    });
-
-    seriesRef.current.setData(chartData);
+    // Bars already in correct format: { time, value }
+    seriesRef.current.setData(bars);
 
     // Fit content to show all data
-    if (chartRef.current && chartData.length > 0) {
+    if (chartRef.current && bars.length > 0) {
       chartRef.current.timeScale().fitContent();
     }
   }, [bars]);
+
+  // Update indicator series when indicators change
+  useEffect(() => {
+    if (!smaSeriesRef.current) return;
+
+    // Update or clear SMA20 data
+    if (indicators?.sma20 && indicators.sma20.length > 0) {
+      smaSeriesRef.current.setData(indicators.sma20);
+    } else {
+      // Clear the series if no data (important when switching timeframes)
+      smaSeriesRef.current.setData([]);
+    }
+  }, [indicators]);
 
   return (
     <div
