@@ -5,7 +5,7 @@ import cors from "cors";
 import express from "express";
 
 import { auth } from "./auth.js";
-import { TABLE_MAP, TICKERS } from "./config.js";
+import { TABLE_MAP, SYMBOLS } from "./config.js";
 import DatabaseOperations from "./db/db-operations.js";
 import DatabaseSchema from "./db/db-schema.js";
 import createDefaultUser from "./db/seed-user.js";
@@ -78,36 +78,9 @@ app.get("/ingest/:startDate/:endDate", async (req, res) => {
       }
     }
 
-    // Calculate technical indicators for all tickers and timeframes
-    console.log("Starting technical indicator calculations...");
-    const indicatorResults = { success: [], failed: [] };
-
-    for (const ticker of TICKERS) {
-      for (const tf in TABLE_MAP) {
-        try {
-          await IndicatorService.calculateAndSave(ticker, tf);
-          indicatorResults.success.push({ ticker, timeframe: tf });
-        } catch (error) {
-          console.error(
-            `Failed to calculate indicators for ${ticker} (${tf}):`,
-            error.message
-          );
-          indicatorResults.failed.push({
-            ticker,
-            timeframe: tf,
-            error: error.message,
-          });
-          // Continue with other tickers/timeframes
-        }
-      }
-    }
-
-    console.log("Technical indicator calculations completed");
-
     res.json({
-      message: "Data ingestion and indicator calculation completed",
+      message: "Data ingestion completed",
       results,
-      indicators: indicatorResults,
     });
   } catch (error) {
     res.status(500).json({
@@ -130,6 +103,39 @@ app.get("/ta/:symbol/:timeframe", async (req, res) => {
     });
   } catch (error) {
     console.error(`Failed to fetch TA data:`, error.message);
+  }
+});
+
+app.get("/ta/calculate", async (req, res) => {
+  // Calculate technical indicators for all tickers and timeframes
+  console.log("Starting technical indicator calculations...");
+  const indicatorResults = { success: [], failed: [] };
+  try {
+    for (const ticker of SYMBOLS) {
+      for (const tf in TABLE_MAP) {
+        try {
+          await IndicatorService.calculateAndSave(ticker, tf);
+          indicatorResults.success.push({ ticker, timeframe: tf });
+        } catch (error) {
+          console.error(
+            `Failed to calculate indicators for ${ticker} (${tf}):`,
+            error.message
+          );
+          indicatorResults.failed.push({
+            ticker,
+            timeframe: tf,
+            error: error.message,
+          });
+          // Continue with other tickers/timeframes
+        }
+      }
+    }
+    res.json({
+      message: "Indicator calculations completed",
+      results: indicatorResults,
+    });
+  } catch (error) {
+    console.error("Failed to calculate indicators", error.message);
   }
 });
 

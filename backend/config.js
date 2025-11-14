@@ -1,4 +1,4 @@
-const TICKERS = [
+const SYMBOLS = [
   "AAPL",
   "MSFT",
   "GOOGL",
@@ -17,4 +17,44 @@ const TABLE_MAP = {
   "1H": "market_data_1h",
   "1D": "market_data_1d",
 };
-export { TABLE_MAP, TICKERS };
+
+const INDICATORS = {
+  SMA: { period: 5 },
+  SMA: { period: 8 },
+  SMA: { period: 10 },
+  SMA: { period: 12 },
+  SMA: { period: 13 },
+  SMA: { period: 20 },
+  SMA: { period: 21 },
+  SMA: { period: 34 },
+  SMA: { period: 50 },
+  SMA: { period: 55 },
+  SMA: { period: 89 },
+  SMA: { period: 100 },
+  SMA: { period: 150 },
+  SMA: { period: 200 },
+  EMA: { period: 5 },
+  EMA: { period: 8 },
+  EMA: { period: 10 },
+  EMA: { period: 12 },
+  EMA: { period: 13 },
+  EMA: { period: 20 },
+  EMA: { period: 21 },
+  EMA: { period: 34 },
+  EMA: { period: 50 },
+  EMA: { period: 55 },
+  EMA: { period: 89 },
+  EMA: { period: 100 },
+  EMA: { period: 150 },
+  EMA: { period: 200 },
+  RSI: { period: 14 },
+  MACD: { fast: 12, slow: 26, signal: 9 },
+  BBANDS: { period: 20, stddev: 2.0 },
+  STOCH: { k_period: 14, d_period: 3 },
+  ATR: { period: 14 },
+  ADX: { period: 14 },
+  CCI: { period: 14 },
+  OBV: {},
+};
+
+export { TABLE_MAP, SYMBOLS, INDICATORS };
