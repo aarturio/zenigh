@@ -82,16 +82,11 @@ class StreamService {
       }
       // 1. Load market and ta data
       console.log(`Loading historical data for ${ticker} (${timeframe})...`);
-      const dbBars = await DatabaseOperations.getMarketData(
-        ticker,
-        timeframe,
-        500 // Limit to last 500 bars for better performance
-      );
+      const dbBars = await DatabaseOperations.getMarketData(ticker, timeframe);
 
       const taData = await DatabaseOperations.getTechnicalAnalysis(
         ticker,
-        timeframe,
-        500
+        timeframe
       );
 
       // 2. Transform and send to frontend

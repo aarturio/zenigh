@@ -253,7 +253,6 @@ async def calculate_indicator(request: IndicatorRequest):
 
 class BatchIndicatorRequest(BaseModel):
     """Request for calculating multiple indicators at once"""
-    indicators: List[str]
     data: OHLCVData
     params: Optional[Dict[str, Dict[str, Any]]] = Field(default_factory=dict)
 
@@ -265,7 +264,6 @@ async def calculate_indicators(request: BatchIndicatorRequest):
     Example:
     ```json
     {
-      "indicators": ["RSI", "MACD", "BBANDS"],
       "data": { ... },
       "params": {
         "RSI": {"period": 14},
@@ -277,13 +275,12 @@ async def calculate_indicators(request: BatchIndicatorRequest):
     results = {}
     errors = {}
 
-    for indicator in request.indicators:
+    for indicator, param in request.params.items():
         try:
-            indicator_params = request.params.get(indicator, {})
             req = IndicatorRequest(
                 indicator=indicator,
                 data=request.data,
-                params=indicator_params
+                params=param
             )
             response = await calculate_indicator(req)
             results[indicator] = response.data

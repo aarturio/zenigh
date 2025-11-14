@@ -36,10 +36,9 @@ class DatabaseOperations {
    * Get market data by symbol and timeframe
    * @param {string} symbol - Stock symbol
    * @param {string} timeframe - Timeframe (1T, 5T, 1H, 1D)
-   * @param {number|null} limit - Number of bars to fetch (default: 200, null for unlimited)
    * @returns {Promise<Array>} Array of OHLCV bars in chronological order (oldest to newest)
    */
-  static async getMarketData(symbol, timeframe, limit = 200) {
+  static async getMarketData(symbol, timeframe) {
     const tableName = TABLE_MAP[timeframe];
 
     if (!tableName) {
@@ -50,39 +49,13 @@ class DatabaseOperations {
       );
     }
 
-    // Build query
-    const query = db(tableName).where({ symbol }).orderBy("timestamp", "desc");
+    // Get all data for this symbol/timeframe
+    const rows = await db(tableName)
+      .where({ symbol })
+      .orderBy("timestamp", "desc");
 
-    // Apply limit if specified
-    if (limit !== null && limit !== undefined) {
-      query.limit(limit);
-    }
-
-    const rows = await query;
     // Return in chronological order (oldest to newest)
     return rows.reverse();
-  }
-
-  /**
-   * Check if we have enough data for indicators
-   * @param {string} symbol - Stock symbol
-   * @param {string} timeframe - Timeframe
-   * @param {number} requiredBars - Minimum bars needed (default: 50)
-   * @returns {Promise<boolean>} True if enough data exists
-   */
-  static async hasEnoughData(symbol, timeframe, requiredBars = 50) {
-    const tableName = TABLE_MAP[timeframe];
-
-    if (!tableName) {
-      throw new Error(`Invalid timeframe: ${timeframe}`);
-    }
-
-    const count = await db(tableName)
-      .where({ symbol })
-      .count("* as count")
-      .first();
-
-    return parseInt(count.count) >= requiredBars;
   }
 
   /**
@@ -121,20 +94,20 @@ class DatabaseOperations {
     console.log(`Bulk saved ${totalInserted} technical analysis records`);
   }
 
-  static async getTechnicalAnalysis(symbol, timeframe, limit = 200) {
+  /**
+   * Get technical analysis data by symbol and timeframe
+   * @param {string} symbol - Stock symbol
+   * @param {string} timeframe - Timeframe (1T, 5T, 1H, 1D)
+   * @returns {Promise<Array>} Array of technical analysis records in chronological order (oldest to newest)
+   */
+  static async getTechnicalAnalysis(symbol, timeframe) {
     const tableName = "technical_analysis";
 
-    // Build query
-    const query = db(tableName)
+    // Get all TA data for this symbol/timeframe
+    const rows = await db(tableName)
       .where({ symbol, timeframe })
       .orderBy("timestamp", "desc");
 
-    // Apply limit if specified
-    if (limit !== null && limit !== undefined) {
-      query.limit(limit);
-    }
-
-    const rows = await query;
     // Return in chronological order (oldest to newest)
     return rows.reverse();
   }

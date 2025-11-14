@@ -1,11 +1,11 @@
-import { TICKERS } from "../config.js";
+import { SYMBOLS } from "../config.js";
 
 class CoreDataClient {
   constructor() {
     this.keyId = process.env.ALPACA_API_KEY;
     this.secretKey = process.env.ALPACA_SECRET_KEY;
     this.feed = "iex";
-    this.symbols = TICKERS.join("%2C");
+    this.symbols = SYMBOLS.join("%2C");
   }
 
   async getBars(start, end, timeframe, page_token = null) {

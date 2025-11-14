@@ -1,41 +1,23 @@
 import DatabaseOperations from "../db/db-operations.js";
+import { INDICATORS } from "../config.js";
 
-const TA_SERVICE_URL =
-  process.env.TA_SERVICE_URL || "http://localhost:8001";
+const TA_SERVICE_URL = process.env.TA_SERVICE_URL;
 
 class IndicatorService {
   /**
-   * Calculate all indicators for a symbol/timeframe
+   * Calculate all indicators for a symbol/timeframe using all available data
    * @param {string} symbol - Stock symbol
    * @param {string} timeframe - Timeframe (1T, 5T, 1H, 1D)
-   * @param {number} lookback - Number of bars to use for calculation (default: 200)
    * @returns {Promise<Array>} Array of analysis results per bar
    */
-  static async calculateAndSave(symbol, timeframe, lookback = 200) {
+  static async calculateAndSave(symbol, timeframe) {
     try {
       console.log(
         `Calculating technical indicators for ${symbol} (${timeframe})...`
       );
 
-      // Check if we have enough data
-      const hasData = await DatabaseOperations.hasEnoughData(
-        symbol,
-        timeframe,
-        lookback
-      );
-      if (!hasData) {
-        console.log(
-          `Insufficient data for ${symbol} (${timeframe}), skipping indicators`
-        );
-        return [];
-      }
-
       // Get OHLCV data from database
-      const bars = await DatabaseOperations.getMarketData(
-        symbol,
-        timeframe,
-        lookback
-      );
+      const bars = await DatabaseOperations.getMarketData(symbol, timeframe);
 
       // Transform to TA service format
       const ohlcvData = this.transformToOHLCV(bars);
@@ -95,19 +77,8 @@ class IndicatorService {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        indicators: ["RSI", "MACD", "BBANDS", "STOCH", "ATR", "SMA", "EMA", "ADX", "CCI", "OBV"],
         data: ohlcvData,
-        params: {
-          RSI: { period: 14 },
-          MACD: { fast: 12, slow: 26, signal: 9 },
-          BBANDS: { period: 20, stddev: 2.0 },
-          STOCH: { k_period: 14, d_period: 3 },
-          ATR: { period: 14 },
-          SMA: { period: 20 },
-          EMA: { period: 12 },
-          ADX: { period: 14 },
-          CCI: { period: 14 },
-        },
+        params: INDICATORS,
       }),
     });
 
@@ -197,7 +168,9 @@ class IndicatorService {
         volume: {
           current: parseFloat(bar.volume),
           sma20: this.getValueAt(indicatorResults.SMA?.values, i), // This should ideally be volume SMA
-          aboveAverage: parseFloat(bar.volume) > this.getValueAt(indicatorResults.SMA?.values, i),
+          aboveAverage:
+            parseFloat(bar.volume) >
+            this.getValueAt(indicatorResults.SMA?.values, i),
           obv: {
             value: this.getValueAt(indicatorResults.OBV?.values, i),
           },
