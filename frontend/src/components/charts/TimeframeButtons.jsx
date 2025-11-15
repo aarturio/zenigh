@@ -1,6 +1,5 @@
 import { Button, ButtonGroup } from "@chakra-ui/react";
 import { useState } from "react";
-import { styles } from "./TimeframeButtons.styles";
 
 const TimeframeButtons = ({ onTimeframeChange }) => {
   const [activeTimeframe, setActiveTimeframe] = useState("1H");
@@ -18,16 +17,24 @@ const TimeframeButtons = ({ onTimeframeChange }) => {
   ];
 
   return (
-    <ButtonGroup {...styles.buttonGroup}>
-      {timeframes.map(({ value, label }) => (
-        <Button
-          key={value}
-          onClick={(e) => handleClick(e, value)}
-          {...styles.getButtonStyles(activeTimeframe === value)}
-        >
-          {label}
-        </Button>
-      ))}
+    <ButtonGroup rounded="sm" p={1} size="sm" variant="ghost">
+      {timeframes.map(({ value, label }) => {
+        const isActive = activeTimeframe === value;
+        return (
+          <Button
+            key={value}
+            variant="ghost"
+            onClick={(e) => handleClick(e, value)}
+            bg={isActive ? "text.secondary" : "transparent"}
+            color={isActive ? "bg.primary" : "fg.secondary"}
+            _hover={{
+              bg: isActive ? "text.tertiary" : "text.subtle",
+            }}
+          >
+            {label}
+          </Button>
+        );
+      })}
     </ButtonGroup>
   );
 };

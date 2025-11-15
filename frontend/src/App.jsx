@@ -4,7 +4,6 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-import "./App.css";
 import LandingPage from "./components/pages/LandingPage.jsx";
 import ChartPage from "./components/pages/ChartPage.jsx";
 import { authClient } from "../lib/auth-client";

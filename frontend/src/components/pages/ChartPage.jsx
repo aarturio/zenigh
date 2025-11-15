@@ -1,23 +1,20 @@
 import { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
 import { Box } from "@chakra-ui/react";
-import Navbar from "../layout/Navbar.jsx";
 import ChartView from "../charts/ChartView.jsx";
 
 function ChartPage() {
   const [bars, setBars] = useState([]);
   const [indicators, setIndicators] = useState({});
-  const [ticker, setTicker] = useState("");
   const [activeTicker, setActiveTicker] = useState(null);
   const [hoveredPrice, setHoveredPrice] = useState(null);
   const [aiOutput, setAiOutput] = useState("");
   const socketRef = useRef(null);
 
   const requestStartStream = (tickerSymbol, timeframe) => {
-    const symbol = tickerSymbol || ticker;
-    if (socketRef.current && symbol) {
+    if (socketRef.current && tickerSymbol) {
       socketRef.current.emit("startStream", {
-        ticker: symbol.toUpperCase(),
+        ticker: tickerSymbol.toUpperCase(),
         timeframe: timeframe,
       });
     }
@@ -27,14 +24,6 @@ function ChartPage() {
     if (socketRef.current) {
       socketRef.current.emit("stopStream");
     }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    requestStopStream();
-    requestStartStream(ticker, "1H");
-    setActiveTicker(ticker.toUpperCase());
-    setTicker(""); // Clear the input field after submitting
   };
 
   useEffect(() => {
@@ -98,9 +87,14 @@ function ChartPage() {
     }
   };
 
+  const handleSelectSymbol = (symbol) => {
+    requestStopStream();
+    requestStartStream(symbol, "1H");
+    setActiveTicker(symbol);
+  };
+
   return (
     <Box>
-      <Navbar ticker={ticker} setTicker={setTicker} onSubmit={handleSubmit} />
       <ChartView
         bars={bars}
         indicators={indicators}
@@ -109,6 +103,7 @@ function ChartPage() {
         aiOutput={aiOutput}
         handleTimeframeChange={handleTimeframeChange}
         ticker={activeTicker}
+        onSelectSymbol={handleSelectSymbol}
       />
     </Box>
   );
