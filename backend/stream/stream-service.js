@@ -32,6 +32,30 @@ class StreamService {
       time: new Date(bar.timestamp).getTime() / 1000,
     }));
     const indicators = {
+      sma5: taRecords
+        .filter((ta) => ta.indicators?.trend?.sma?.["5"] != null)
+        .map((ta) => ({
+          time: new Date(ta.timestamp).getTime() / 1000,
+          value: ta.indicators.trend.sma["5"],
+        })),
+      sma8: taRecords
+        .filter((ta) => ta.indicators?.trend?.sma?.["8"] != null)
+        .map((ta) => ({
+          time: new Date(ta.timestamp).getTime() / 1000,
+          value: ta.indicators.trend.sma["8"],
+        })),
+      sma10: taRecords
+        .filter((ta) => ta.indicators?.trend?.sma?.["10"] != null)
+        .map((ta) => ({
+          time: new Date(ta.timestamp).getTime() / 1000,
+          value: ta.indicators.trend.sma["10"],
+        })),
+      sma13: taRecords
+        .filter((ta) => ta.indicators?.trend?.sma?.["13"] != null)
+        .map((ta) => ({
+          time: new Date(ta.timestamp).getTime() / 1000,
+          value: ta.indicators.trend.sma["13"],
+        })),
       sma20: taRecords
         .filter((ta) => ta.indicators?.trend?.sma?.["20"] != null)
         .map((ta) => ({

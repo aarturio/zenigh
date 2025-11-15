@@ -66,7 +66,7 @@ app.get("/ingest/:startDate/:endDate", async (req, res) => {
           console.log(
             `Inserting ${formattedData.length} records into ${tableName}`
           );
-          await DatabaseOperations.insertMarketData(formattedData, tableName);
+          await DatabaseOperations.saveMarketData(formattedData, tableName);
           results.success.push({ timeframe: tf, count: formattedData.length });
         } else {
           results.success.push({ timeframe: tf, count: 0 });

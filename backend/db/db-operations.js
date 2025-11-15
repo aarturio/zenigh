@@ -4,7 +4,7 @@ import db from "./db-connection.js";
 
 class DatabaseOperations {
   // Insert market data with batching (handles large datasets)
-  static async insertMarketData(dataArray, tableName) {
+  static async saveMarketData(dataArray, tableName) {
     const BATCH_SIZE = 5000;
     let totalInserted = 0;
 

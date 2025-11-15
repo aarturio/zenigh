@@ -71,6 +71,7 @@ const LightweightChart = ({ bars, indicators, onHover }) => {
       lineWidth: 1,
       lastValueVisible: false,
       priceLineVisible: false,
+      title: "SMA 20",
     });
 
     smaSeriesRef.current = smaSeries;
