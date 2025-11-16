@@ -1,5 +1,5 @@
-import DatabaseOperations from "../db/db-operations.js";
 import { INDICATORS } from "../config.js";
+import DatabaseOperations from "../db/db-operations.js";
 
 const TA_SERVICE_URL = process.env.TA_SERVICE_URL;
 
