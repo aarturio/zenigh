@@ -12,10 +12,10 @@ const PriceCard = (props) => {
 
   return (
     <Box p={2} textAlign="center">
-      <Text textStyle="lg" fontWeight="bold" color="var(--color-text)">
+      <Text textStyle="lg" fontWeight="bold" color="fg">
         {ticker}
       </Text>
-      <Text textStyle="lg" fontWeight="bold" color="var(--color-primary)">
+      <Text textStyle="lg" fontWeight="bold" color="primary">
         <FormatNumber
           value={displayPrice}
           style="currency"

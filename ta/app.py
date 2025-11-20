@@ -161,10 +161,13 @@ INDICATOR_FUNCTIONS = {
     "OBV": calculate_obv,
 }
 
-# Indicator signature groups (defines what data each indicator needs)
-CLOSE_ONLY_INDICATORS = {"RSI", "SMA", "EMA", "MACD", "BBANDS"}
-HLC_INDICATORS = {"STOCH", "ATR", "ADX", "CCI"}  # High, Low, Close
-VOLUME_INDICATORS = {"OBV"}  # Close, Volume
+# Indicator data type mapping (defines what data each type needs)
+# Data types: 'close', 'hlc' (high/low/close), 'volume' (close + volume)
+DATA_TYPE_MAP = {
+    "close": ["close"],
+    "hlc": ["high", "low", "close"],
+    "volume": ["close", "volume"]
+}
 
 # ============================================================================
 # API Endpoints
@@ -216,18 +219,26 @@ async def calculate_indicator(request: IndicatorRequest):
         # Get the calculation function
         calc_func = INDICATOR_FUNCTIONS[indicator]
 
-        # Call function with appropriate arguments based on indicator signature
-        if indicator in CLOSE_ONLY_INDICATORS:
-            result_data = calc_func(close, **request.params)
-        elif indicator in HLC_INDICATORS:
-            result_data = calc_func(high, low, close, **request.params)
-        elif indicator in VOLUME_INDICATORS:
+        # Determine data type from params or use default
+        data_type = request.params.get("dataType", "close")
+
+        # Remove dataType from params before passing to indicator function
+        indicator_params = {k: v for k, v in request.params.items() if k != "dataType"}
+
+        # Call function with appropriate arguments based on data type
+        if data_type == "close":
+            result_data = calc_func(close, **indicator_params)
+        elif data_type == "hlc":
+            result_data = calc_func(high, low, close, **indicator_params)
+        elif data_type == "volume":
             if volume is None or len(volume) == 0:
                 raise HTTPException(status_code=400, detail=f"{indicator} requires volume data")
             result_data = calc_func(close, volume)
         else:
-            # Fallback for any new indicators not yet categorized
-            result_data = calc_func(close, **request.params)
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unknown data type: {data_type}. Available: {list(DATA_TYPE_MAP.keys())}"
+            )
 
         logger.info(f"Successfully calculated {indicator}")
 
@@ -237,7 +248,7 @@ async def calculate_indicator(request: IndicatorRequest):
             data=result_data,
             metadata={
                 "data_points": len(close),
-                "params": request.params
+                "params": indicator_params
             }
         )
 
@@ -266,8 +277,16 @@ async def calculate_indicators(request: BatchIndicatorRequest):
     {
       "data": { ... },
       "params": {
-        "RSI": {"period": 14},
-        "MACD": {"fast": 12, "slow": 26, "signal": 9}
+        "RSI": {
+          "function": "RSI",
+          "dataType": "close",
+          "params": {"period": 14}
+        },
+        "MACD": {
+          "function": "MACD",
+          "dataType": "close",
+          "params": {"fast": 12, "slow": 26, "signal": 9}
+        }
       }
     }
     ```
@@ -275,18 +294,26 @@ async def calculate_indicators(request: BatchIndicatorRequest):
     results = {}
     errors = {}
 
-    for indicator, param in request.params.items():
+    for indicator_key, indicator_config in request.params.items():
         try:
+            # Extract function name, dataType, and params from config
+            function_name = indicator_config.get("function", indicator_key)
+            data_type = indicator_config.get("dataType", "close")
+            indicator_params = indicator_config.get("params", {})
+
+            # Add dataType to params so calculate_indicator can use it
+            params_with_type = {**indicator_params, "dataType": data_type}
+
             req = IndicatorRequest(
-                indicator=indicator,
+                indicator=function_name,
                 data=request.data,
-                params=param
+                params=params_with_type
             )
             response = await calculate_indicator(req)
-            results[indicator] = response.data
+            results[indicator_key] = response.data
         except Exception as e:
-            errors[indicator] = str(e)
-            logger.error(f"Batch calculation failed for {indicator}: {str(e)}")
+            errors[indicator_key] = str(e)
+            logger.error(f"Batch calculation failed for {indicator_key}: {str(e)}")
 
     return {
         "success": len(errors) == 0,

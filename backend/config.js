@@ -19,42 +19,146 @@ const TABLE_MAP = {
 };
 
 const INDICATORS = {
-  SMA: { period: 5 },
-  SMA: { period: 8 },
-  SMA: { period: 10 },
-  SMA: { period: 12 },
-  SMA: { period: 13 },
-  SMA: { period: 20 },
-  SMA: { period: 21 },
-  SMA: { period: 34 },
-  SMA: { period: 50 },
-  SMA: { period: 55 },
-  SMA: { period: 89 },
-  SMA: { period: 100 },
-  SMA: { period: 150 },
-  SMA: { period: 200 },
-  EMA: { period: 5 },
-  EMA: { period: 8 },
-  EMA: { period: 10 },
-  EMA: { period: 12 },
-  EMA: { period: 13 },
-  EMA: { period: 20 },
-  EMA: { period: 21 },
-  EMA: { period: 34 },
-  EMA: { period: 50 },
-  EMA: { period: 55 },
-  EMA: { period: 89 },
-  EMA: { period: 100 },
-  EMA: { period: 150 },
-  EMA: { period: 200 },
-  RSI: { period: 14 },
-  MACD: { fast: 12, slow: 26, signal: 9 },
-  BBANDS: { period: 20, stddev: 2.0 },
-  STOCH: { k_period: 14, d_period: 3 },
-  ATR: { period: 14 },
-  ADX: { period: 14 },
-  CCI: { period: 14 },
-  OBV: {},
+  SMA5: {
+    function: "SMA",
+    dataType: "close",
+    params: { period: 5 },
+  }, // Ultra short term momentum
+  SMA8: {
+    function: "SMA",
+    dataType: "close",
+    params: { period: 8 },
+  }, // Fibonacci level
+  SMA10: {
+    function: "SMA",
+    dataType: "close",
+    params: { period: 10 },
+  }, // Two-week trend
+  SMA13: {
+    function: "SMA",
+    dataType: "close",
+    params: { period: 13 },
+  }, // Fibonacci level
+  SMA20: {
+    function: "SMA",
+    dataType: "close",
+    params: { period: 20 },
+  }, // Monthly trend
+  SMA34: {
+    function: "SMA",
+    dataType: "close",
+    params: { period: 34 },
+  }, // Fibonacci level
+  SMA50: {
+    function: "SMA",
+    dataType: "close",
+    params: { period: 50 },
+  }, // Quarterly trend
+  SMA100: {
+    function: "SMA",
+    dataType: "close",
+    params: { period: 100 },
+  }, // Psychological level
+  SMA150: {
+    function: "SMA",
+    dataType: "close",
+    params: { period: 150 },
+  }, // Weinstein's level
+  SMA200: {
+    function: "SMA",
+    dataType: "close",
+    params: { period: 200 },
+  }, // Long term MA
+  EMA5: {
+    function: "EMA",
+    dataType: "close",
+    params: { period: 5 },
+  }, // Ultra short term momentum
+  EMA8: {
+    function: "EMA",
+    dataType: "close",
+    params: { period: 8 },
+  }, // Fibonacci level
+  EMA10: {
+    function: "EMA",
+    dataType: "close",
+    params: { period: 10 },
+  }, // Two-week trend
+  EMA13: {
+    function: "EMA",
+    dataType: "close",
+    params: { period: 13 },
+  }, // Fibonacci level
+  EMA20: {
+    function: "EMA",
+    dataType: "close",
+    params: { period: 20 },
+  }, // Monthly trend
+  EMA34: {
+    function: "EMA",
+    dataType: "close",
+    params: { period: 34 },
+  }, // Fibonacci level
+  EMA50: {
+    function: "EMA",
+    dataType: "close",
+    params: { period: 50 },
+  }, // Quarterly trend
+  EMA100: {
+    function: "EMA",
+    dataType: "close",
+    params: { period: 100 },
+  }, // Psychological level
+  EMA150: {
+    function: "EMA",
+    dataType: "close",
+    params: { period: 150 },
+  }, // Weinstein's level
+  EMA200: {
+    function: "EMA",
+    dataType: "close",
+    params: { period: 200 },
+  }, // Long term MA
+  RSI: {
+    function: "RSI",
+    dataType: "close",
+    params: { period: 14 },
+  },
+  MACD: {
+    function: "MACD",
+    dataType: "close",
+    params: { fast: 12, slow: 26, signal: 9 },
+  },
+  BBANDS: {
+    function: "BBANDS",
+    dataType: "close",
+    params: { period: 20, stddev: 2.0 },
+  },
+  STOCH: {
+    function: "STOCH",
+    dataType: "hlc",
+    params: { k_period: 14, d_period: 3 },
+  },
+  ATR: {
+    function: "ATR",
+    dataType: "hlc",
+    params: { period: 14 },
+  },
+  ADX: {
+    function: "ADX",
+    dataType: "hlc",
+    params: { period: 14 },
+  },
+  CCI: {
+    function: "CCI",
+    dataType: "hlc",
+    params: { period: 14 },
+  },
+  OBV: {
+    function: "OBV",
+    dataType: "volume",
+    params: {},
+  },
 };
 
 export { TABLE_MAP, SYMBOLS, INDICATORS };

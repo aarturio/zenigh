@@ -1,30 +1,43 @@
 import React, { useEffect, useLayoutEffect, useRef } from "react";
 import { createChart, LineSeries } from "lightweight-charts";
+import { INDICATOR_CATEGORIES } from "../layout/IndicatorControl";
 
-const LightweightChart = ({ bars, indicators, onHover }) => {
+const LightweightChart = ({
+  bars,
+  indicators,
+  selectedIndicators = [],
+  onHover,
+}) => {
   const chartContainerRef = useRef(null);
   const chartRef = useRef(null);
   const seriesRef = useRef(null);
-  const smaSeriesRef = useRef(null);
+  const indicatorSeriesRef = useRef({});
+
+  // Get indicator config by ID
+  const getIndicatorConfig = (indicatorId) => {
+    for (const category of Object.values(INDICATOR_CATEGORIES)) {
+      const indicator = category.indicators.find(
+        (ind) => ind.id === indicatorId
+      );
+      if (indicator) return indicator;
+    }
+    return null;
+  };
 
   // Initialize chart once
   useLayoutEffect(() => {
-    // Read CSS variables for colors (canvas doesn't support CSS vars)
+    // Read Chakra CSS variables for colors (canvas doesn't support CSS vars)
     const rootStyles = getComputedStyle(document.documentElement);
-    const primaryColor = rootStyles.getPropertyValue("--color-primary").trim();
-    const textColor = rootStyles.getPropertyValue("--color-text").trim();
-    const primaryColor20 = rootStyles
-      .getPropertyValue("--color-primary-20")
-      .trim();
-    const primaryColor30 = rootStyles
-      .getPropertyValue("--color-primary-30")
-      .trim();
+    const primaryColor = rootStyles.getPropertyValue("--chakra-colors-brand-teal").trim() || "#1bf2d9";
+    const textColor = rootStyles.getPropertyValue("--chakra-colors-text-primary").trim() || "#ffffff";
+    const primaryColor30 = rootStyles.getPropertyValue("--chakra-colors-teal-30").trim() || "rgba(27, 242, 217, 0.3)";
 
     // Create chart with initial dimensions
     const chart = createChart(chartContainerRef.current, {
       layout: {
         background: { type: "solid", color: "transparent" },
         textColor: textColor,
+        attributionLogo: false,
       },
       width: chartContainerRef.current.clientWidth,
       height: chartContainerRef.current.clientHeight,
@@ -44,10 +57,10 @@ const LightweightChart = ({ bars, indicators, onHover }) => {
         },
       },
       rightPriceScale: {
-        borderColor: primaryColor20,
+        borderColor: "transparent",
       },
       timeScale: {
-        borderColor: primaryColor20,
+        borderColor: "transparent",
         timeVisible: true,
         secondsVisible: false,
       },
@@ -64,16 +77,6 @@ const LightweightChart = ({ bars, indicators, onHover }) => {
     });
 
     seriesRef.current = lineSeries;
-
-    // Create SMA indicator series
-    const smaSeries = chart.addSeries(LineSeries, {
-      color: "#f59e0b", // Orange color for SMA
-      lineWidth: 1,
-      lastValueVisible: false,
-      priceLineVisible: false,
-    });
-
-    smaSeriesRef.current = smaSeries;
 
     // Watch container for size changes using ResizeObserver
     const resizeObserver = new ResizeObserver(() => {
@@ -119,18 +122,54 @@ const LightweightChart = ({ bars, indicators, onHover }) => {
     }
   }, [bars]);
 
-  // Update indicator series when indicators change
+  // Manage indicator series based on selectedIndicators
   useEffect(() => {
-    if (!smaSeriesRef.current) return;
+    if (!chartRef.current) return;
 
-    // Update or clear SMA20 data
-    if (indicators?.sma20 && indicators.sma20.length > 0) {
-      smaSeriesRef.current.setData(indicators.sma20);
-    } else {
-      // Clear the series if no data (important when switching timeframes)
-      smaSeriesRef.current.setData([]);
-    }
-  }, [indicators]);
+    const chart = chartRef.current;
+
+    // Remove series that are no longer selected
+    Object.keys(indicatorSeriesRef.current).forEach((indicatorId) => {
+      if (!selectedIndicators.includes(indicatorId)) {
+        chart.removeSeries(indicatorSeriesRef.current[indicatorId]);
+        delete indicatorSeriesRef.current[indicatorId];
+      }
+    });
+
+    // Add new series for newly selected indicators
+    selectedIndicators.forEach((indicatorId) => {
+      if (!indicatorSeriesRef.current[indicatorId]) {
+        const config = getIndicatorConfig(indicatorId);
+        if (config) {
+          const series = chart.addSeries(LineSeries, {
+            color: config.color,
+            lineWidth: 1,
+            lastValueVisible: false,
+            priceLineVisible: false,
+            title: config.label,
+          });
+          indicatorSeriesRef.current[indicatorId] = series;
+        }
+      }
+    });
+  }, [selectedIndicators]);
+
+  // Update indicator data
+  useEffect(() => {
+    if (!indicators || Object.keys(indicators).length === 0) return;
+
+    selectedIndicators.forEach((indicatorId) => {
+      const series = indicatorSeriesRef.current[indicatorId];
+      const indicatorKey = indicatorId.toLowerCase();
+
+      if (series && indicators[indicatorKey]) {
+        series.setData(indicators[indicatorKey]);
+      } else if (series) {
+        // Clear if no data
+        series.setData([]);
+      }
+    });
+  }, [indicators, selectedIndicators]);
 
   return (
     <div

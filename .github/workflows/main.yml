@@ -19,7 +19,7 @@ jobs:
     # Test against multiple Node.js versions
     strategy:
       matrix:
-        node-version: [18]
+        node-version: [22]
 
     defaults:
       run:
@@ -43,46 +43,40 @@ jobs:
         run: npm run lint
 
       # Tests temporarily disabled during Better Auth migration
-      # - name: Run tests
-      #   run: npm test
+      - name: Run tests
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+        run: npm test
 
-  # # Frontend testing and building
-  # frontend:
-  #   name: Frontend Tests & Build
-  #   runs-on: ubuntu-latest
+  # Frontend testing and building
+  frontend:
+    name: Frontend Tests & Build
+    runs-on: ubuntu-latest
 
-  #   defaults:
-  #     run:
-  #       working-directory: ./frontend
+    defaults:
+      run:
+        working-directory: ./frontend
 
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: "20"
-  #         cache: "npm"
-  #         cache-dependency-path: ./frontend/package-lock.json
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: ./frontend/package-lock.json
 
-  #     - name: Install dependencies
-  #       run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-  #     - name: Run linting
-  #       run: npm run lint
+      - name: Run linting
+        run: npm run lint
 
-  #     - name: Build project
-  #       run: npm run build
+      - name: Run tests
+        run: npm test
 
-  # Optional: Add a job that requires both backend and frontend to pass
-  # TODO(human): Uncomment and complete this job if you want deployment gates
-  # deploy-ready:
-  #   name: Ready for Deployment
-  #   runs-on: ubuntu-latest
-  #   needs: [backend, frontend]
-  #   if: github.ref == 'refs/heads/main'
-  #
-  #   steps:
-  #     - name: All checks passed
-  #       run: echo "🚀 Ready for deployment!"
+      - name: Build project
+        run: npm run build

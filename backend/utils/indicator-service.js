@@ -1,5 +1,5 @@
-import DatabaseOperations from "../db/db-operations.js";
 import { INDICATORS } from "../config.js";
+import DatabaseOperations from "../db/db-operations.js";
 
 const TA_SERVICE_URL = process.env.TA_SERVICE_URL;
 
@@ -126,10 +126,28 @@ class IndicatorService {
         },
         trend: {
           sma: {
-            20: this.getValueAt(indicatorResults.SMA?.values, i),
+            5: this.getValueAt(indicatorResults.SMA5?.values, i),
+            8: this.getValueAt(indicatorResults.SMA8?.values, i),
+            10: this.getValueAt(indicatorResults.SMA10?.values, i),
+            13: this.getValueAt(indicatorResults.SMA13?.values, i),
+            20: this.getValueAt(indicatorResults.SMA20?.values, i),
+            34: this.getValueAt(indicatorResults.SMA34?.values, i),
+            50: this.getValueAt(indicatorResults.SMA50?.values, i),
+            100: this.getValueAt(indicatorResults.SMA100?.values, i),
+            150: this.getValueAt(indicatorResults.SMA150?.values, i),
+            200: this.getValueAt(indicatorResults.SMA200?.values, i),
           },
           ema: {
-            12: this.getValueAt(indicatorResults.EMA?.values, i),
+            5: this.getValueAt(indicatorResults.EMA5?.values, i),
+            8: this.getValueAt(indicatorResults.EMA8?.values, i),
+            10: this.getValueAt(indicatorResults.EMA10?.values, i),
+            13: this.getValueAt(indicatorResults.EMA13?.values, i),
+            20: this.getValueAt(indicatorResults.EMA20?.values, i),
+            34: this.getValueAt(indicatorResults.EMA34?.values, i),
+            50: this.getValueAt(indicatorResults.EMA50?.values, i),
+            100: this.getValueAt(indicatorResults.EMA100?.values, i),
+            150: this.getValueAt(indicatorResults.EMA150?.values, i),
+            200: this.getValueAt(indicatorResults.EMA200?.values, i),
           },
           macd: {
             value: this.getValueAt(indicatorResults.MACD?.macd, i),

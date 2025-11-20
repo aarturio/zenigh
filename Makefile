@@ -42,3 +42,8 @@ ssh-connect: ## Connect to EC2 instance
 
 make lint:
 	cd backend && npm run lint:fix
+	cd frontend && npm run lint:fix
+
+make test:
+	cd backend && npm run test
+	cd frontend && npm run test

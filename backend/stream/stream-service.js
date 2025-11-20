@@ -3,6 +3,15 @@ import DatabaseOperations from "../db/db-operations.js";
 import SocketManager from "./socket-manager.js";
 import StreamController from "./stream-controller.js";
 
+// Define your indicator configuration
+const INDICATOR_CONFIG = {
+  trend: {
+    sma: [5, 8, 10, 13, 20, 34, 50, 100, 150, 200],
+    ema: [5, 8, 10, 13, 20, 34, 50, 100, 150, 200],
+  },
+  // Add other categories as needed
+};
+
 class StreamService {
   constructor(httpServer) {
     // Initialize modules
@@ -31,16 +40,61 @@ class StreamService {
       value: bar.close,
       time: new Date(bar.timestamp).getTime() / 1000,
     }));
-    const indicators = {
-      sma20: taRecords
-        .filter((ta) => ta.indicators?.trend?.sma?.["20"] != null)
-        .map((ta) => ({
-          time: new Date(ta.timestamp).getTime() / 1000,
-          value: ta.indicators.trend.sma["20"],
-        })),
-      // Add more indicators as needed
-      // ema20: taRecords.filter(...).map(...),
-    };
+    // const indicators = {
+    //   sma5: taRecords
+    //     .filter((ta) => ta.indicators?.trend?.sma?.["5"] != null)
+    //     .map((ta) => ({
+    //       time: new Date(ta.timestamp).getTime() / 1000,
+    //       value: ta.indicators.trend.sma["5"],
+    //     })),
+    //   sma8: taRecords
+    //     .filter((ta) => ta.indicators?.trend?.sma?.["8"] != null)
+    //     .map((ta) => ({
+    //       time: new Date(ta.timestamp).getTime() / 1000,
+    //       value: ta.indicators.trend.sma["8"],
+    //     })),
+    //   sma10: taRecords
+    //     .filter((ta) => ta.indicators?.trend?.sma?.["10"] != null)
+    //     .map((ta) => ({
+    //       time: new Date(ta.timestamp).getTime() / 1000,
+    //       value: ta.indicators.trend.sma["10"],
+    //     })),
+    //   sma13: taRecords
+    //     .filter((ta) => ta.indicators?.trend?.sma?.["13"] != null)
+    //     .map((ta) => ({
+    //       time: new Date(ta.timestamp).getTime() / 1000,
+    //       value: ta.indicators.trend.sma["13"],
+    //     })),
+    //   sma20: taRecords
+    //     .filter((ta) => ta.indicators?.trend?.sma?.["20"] != null)
+    //     .map((ta) => ({
+    //       time: new Date(ta.timestamp).getTime() / 1000,
+    //       value: ta.indicators.trend.sma["20"],
+    //     })),
+    //   // Add more indicators as needed
+    //   // ema20: taRecords.filter(...).map(...),
+    // };
+
+    // Generate indicators dynamically
+    const indicators = {};
+
+    Object.entries(INDICATOR_CONFIG).forEach(([category, types]) => {
+      Object.entries(types).forEach(([type, periods]) => {
+        periods.forEach((period) => {
+          const key = `${type}${period}`; // e.g., "sma5", "ema20"
+
+          indicators[key] = taRecords
+            .filter(
+              (ta) =>
+                ta.indicators?.[category]?.[type]?.[String(period)] != null
+            )
+            .map((ta) => ({
+              time: new Date(ta.timestamp).getTime() / 1000,
+              value: ta.indicators[category][type][String(period)],
+            }));
+        });
+      });
+    });
     return { bars, indicators };
   }
 

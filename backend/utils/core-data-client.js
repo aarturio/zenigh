@@ -32,30 +32,38 @@ class CoreDataClient {
       throw error;
     }
   }
-  async recursiveIterator(
-    prevBars,
-    startDate,
-    endDate,
-    timeframe,
-    token = null
-  ) {
-    const page = await this.getBars(startDate, endDate, timeframe, token);
+  async getData(startDate, endDate, timeframe) {
+    const allBars = {};
+    let nextPageToken = null;
+    let pageCount = 0;
 
-    const mergedBars = { ...prevBars, ...page.bars };
-    if (page.next_page_token) {
-      return this.recursiveIterator(
-        mergedBars,
+    do {
+      const page = await this.getBars(
         startDate,
         endDate,
         timeframe,
-        page.next_page_token
+        nextPageToken
       );
-    }
-    return mergedBars;
-  }
 
-  async getData(startDate, endDate, timeframe) {
-    return await this.recursiveIterator({}, startDate, endDate, timeframe);
+      // Merge bars efficiently using push
+      for (const symbol in page.bars) {
+        if (!allBars[symbol]) {
+          allBars[symbol] = [];
+        }
+        allBars[symbol].push(...page.bars[symbol]);
+      }
+
+      nextPageToken = page.next_page_token;
+      pageCount++;
+
+      if (nextPageToken) {
+        console.log(`Fetched page ${pageCount}, continuing...`);
+      } else {
+        console.log(`Completed: fetched ${pageCount} page(s)`);
+      }
+    } while (nextPageToken);
+
+    return allBars;
   }
 }
 
