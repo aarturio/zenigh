@@ -8,7 +8,7 @@ function ChartPage() {
   const [indicators, setIndicators] = useState({});
   const [activeTicker, setActiveTicker] = useState(null);
   const [hoveredPrice, setHoveredPrice] = useState(null);
-  const [aiOutput, setAiOutput] = useState("");
+  const [aiOutput] = useState(""); // TODO: Implement AI output feature
   const socketRef = useRef(null);
 
   const requestStartStream = (tickerSymbol, timeframe) => {

@@ -30,7 +30,6 @@ const LightweightChart = ({
     const rootStyles = getComputedStyle(document.documentElement);
     const primaryColor = rootStyles.getPropertyValue("--chakra-colors-brand-teal").trim() || "#1bf2d9";
     const textColor = rootStyles.getPropertyValue("--chakra-colors-text-primary").trim() || "#ffffff";
-    const primaryColor20 = rootStyles.getPropertyValue("--chakra-colors-teal-20").trim() || "rgba(27, 242, 217, 0.2)";
     const primaryColor30 = rootStyles.getPropertyValue("--chakra-colors-teal-30").trim() || "rgba(27, 242, 217, 0.3)";
 
     // Create chart with initial dimensions

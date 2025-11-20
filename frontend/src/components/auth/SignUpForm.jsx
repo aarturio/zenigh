@@ -22,7 +22,7 @@ const SignUpForm = () => {
       </Text>
 
       <Text color="fg.secondary" fontSize="sm">
-        We're not accepting new sign ups at the moment. Join our mailing
+        We&apos;re not accepting new sign ups at the moment. Join our mailing
         list to be notified when we launch!
       </Text>
 
@@ -77,7 +77,7 @@ const SignUpForm = () => {
           width="full"
         >
           <Text fontWeight="500">
-            Thanks for joining! We'll be in touch soon.
+            Thanks for joining! We&apos;ll be in touch soon.
           </Text>
         </Box>
       )}

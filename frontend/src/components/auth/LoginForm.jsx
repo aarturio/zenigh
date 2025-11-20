@@ -15,7 +15,7 @@ const LoginForm = () => {
     setLoading(true);
     setError("");
 
-    const { data, error: authError } = await authClient.signIn.email({
+    const { error: authError } = await authClient.signIn.email({
       email,
       password,
     });
