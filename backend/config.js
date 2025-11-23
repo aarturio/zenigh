@@ -161,4 +161,11 @@ const INDICATORS = {
   },
 };
 
-export { TABLE_MAP, SYMBOLS, INDICATORS };
+const INDICATOR_CONFIG = {
+  trend: {
+    sma: [5, 8, 10, 13, 20, 34, 50, 100, 150, 200],
+    ema: [5, 8, 10, 13, 20, 34, 50, 100, 150, 200],
+  },
+};
+
+export { TABLE_MAP, SYMBOLS, INDICATORS, INDICATOR_CONFIG };

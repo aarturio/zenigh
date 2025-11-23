@@ -5,13 +5,13 @@ import cors from "cors";
 import express from "express";
 
 import { auth } from "./auth.js";
-import { TABLE_MAP, SYMBOLS } from "./config.js";
+import { TABLE_MAP, SYMBOLS, INDICATOR_CONFIG } from "./config.js";
 import DatabaseOperations from "./db/db-operations.js";
 import DatabaseSchema from "./db/db-schema.js";
 import createDefaultUser from "./db/seed-user.js";
-import StreamService from "./stream/stream-service.js";
 import coreDataClient from "./utils/core-data-client.js";
 import IndicatorService from "./utils/indicator-service.js";
+import { transformIndicators } from "./utils/indicator-transformer.js";
 
 const app = express();
 const port = 3000;
@@ -139,8 +139,34 @@ app.get("/ta/calculate", async (req, res) => {
   }
 });
 
-// Store server instances for graceful shutdown
-let streamService = null;
+app.get("/market-data/:symbol/:timeframe", async (req, res) => {
+  const { symbol, timeframe } = req.params;
+  const limit = req.query.limit || 1000;
+
+  try {
+    const dbBars = await DatabaseOperations.getMarketData(
+      symbol,
+      timeframe,
+      limit
+    );
+    const dbIndicators = await DatabaseOperations.getTechnicalAnalysis(
+      symbol,
+      timeframe
+    );
+
+    const bars = dbBars.map((bar) => ({
+      time: new Date(bar.timestamp).getTime() / 1000,
+      value: bar.close,
+    }));
+
+    const indicators = transformIndicators(dbIndicators);
+
+    res.json({ bars, indicators });
+  } catch (error) {
+    console.error(`Failed to fetch market data:`, error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // Initialize database and WebSocket server on startup
 async function startServer() {
@@ -149,9 +175,6 @@ async function startServer() {
 
     // Default user
     await createDefaultUser();
-
-    // Initialize WebSocket stream service
-    streamService = new StreamService(httpServer);
 
     httpServer.listen(port, () => {
       console.log(`Server listening on port ${port}`);
@@ -167,12 +190,6 @@ async function gracefulShutdown(signal) {
   console.log(`${signal} received, shutting down gracefully`);
 
   try {
-    // Stop all streams
-    if (streamService) {
-      console.log("Stopping active streams...");
-      streamService.handleStopStream();
-    }
-
     // Close HTTP server
     httpServer.close(() => {
       console.log("HTTP server closed");
