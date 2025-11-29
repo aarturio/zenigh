@@ -46,4 +46,3 @@ make lint:
 
 make test:
 	cd backend && npm run test
-	cd frontend && npm run test

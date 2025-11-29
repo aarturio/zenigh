@@ -1,7 +1,3 @@
-// Polyfill Web Crypto API for Better Auth
-import { webcrypto } from "crypto";
-globalThis.crypto = webcrypto;
-
 import { betterAuth } from "better-auth";
 import pg from "pg";
 

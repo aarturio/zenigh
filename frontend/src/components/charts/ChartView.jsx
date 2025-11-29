@@ -56,7 +56,6 @@ function ChartView({
           />
         </HStack>
 
-        {/* Main Chart Area */}
         {/* Price Chart Container */}
         <Box flex="1" p={3} display="flex" flexDirection="column" minH="0">
           <Box display="flex" justifyContent="center" alignItems="center">
@@ -74,7 +73,12 @@ function ChartView({
               onHover={setHoveredPrice}
             />
           </Box>
-          <Box display="flex" justifyContent="center" position="relative" zIndex={10}>
+          <Box
+            display="flex"
+            justifyContent="center"
+            position="relative"
+            zIndex={10}
+          >
             <TimeframeButtons onTimeframeChange={handleTimeframeChange} />
           </Box>
         </Box>

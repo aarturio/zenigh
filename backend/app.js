@@ -6,12 +6,13 @@ import express from "express";
 
 import { auth } from "./auth.js";
 import { TABLE_MAP, SYMBOLS } from "./config.js";
+import db from "./db/db-connection.js";
 import DatabaseOperations from "./db/db-operations.js";
 import DatabaseSchema from "./db/db-schema.js";
 import createDefaultUser from "./db/seed-user.js";
-import StreamService from "./stream/stream-service.js";
 import coreDataClient from "./utils/core-data-client.js";
 import IndicatorService from "./utils/indicator-service.js";
+import { transformIndicators } from "./utils/indicator-transformer.js";
 
 const app = express();
 const port = 3000;
@@ -90,6 +91,39 @@ app.get("/ingest/:startDate/:endDate", async (req, res) => {
   }
 });
 
+app.get("/ingest/:startDate/:endDate/:timeframe", async (req, res) => {
+  try {
+    const { startDate, endDate, timeframe } = req.params;
+    const tableName = TABLE_MAP[timeframe];
+    const data = await coreDataClient.getData(startDate, endDate, timeframe);
+
+    const formattedData = Object.entries(data).flatMap(([symbol, symbolBars]) =>
+      symbolBars.map((bar) => ({
+        symbol: symbol,
+        timestamp: new Date(bar.t),
+        open: bar.o,
+        high: bar.h,
+        low: bar.l,
+        close: bar.c,
+        volume: bar.v,
+        trade_count: bar.n,
+        vwap: bar.vw,
+      }))
+    );
+
+    if (formattedData.length > 0) {
+      await DatabaseOperations.saveMarketData(formattedData, tableName);
+    }
+    res.json({
+      message: "Data ingested!",
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message,
+    });
+  }
+});
+
 app.get("/ta/:symbol/:timeframe", async (req, res) => {
   try {
     const { symbol, timeframe } = req.params;
@@ -98,7 +132,6 @@ app.get("/ta/:symbol/:timeframe", async (req, res) => {
       timeframe
     );
     res.json({
-      message: "TA fetched!",
       data,
     });
   } catch (error) {
@@ -139,8 +172,50 @@ app.get("/ta/calculate", async (req, res) => {
   }
 });
 
-// Store server instances for graceful shutdown
-let streamService = null;
+app.get("/market-data/:symbol/:timeframe", async (req, res) => {
+  const { symbol, timeframe } = req.params;
+  const limit = req.query.limit || 1000;
+
+  try {
+    const dbBars = await DatabaseOperations.getMarketData(
+      symbol,
+      timeframe,
+      limit
+    );
+    const dbIndicators = await DatabaseOperations.getTechnicalAnalysis(
+      symbol,
+      timeframe
+    );
+
+    const bars = dbBars.map((bar) => ({
+      time: new Date(bar.timestamp).getTime() / 1000,
+      value: bar.close,
+    }));
+
+    const indicators = transformIndicators(dbIndicators);
+
+    res.json({ bars, indicators });
+  } catch (error) {
+    console.error(`Failed to fetch market data:`, error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/db-size", async (req, res) => {
+  try {
+    const sizeQuery = await db.raw(`
+        SELECT 
+          pg_size_pretty(pg_database_size(current_database())) as total_size,
+          pg_database_size(current_database()) as size_bytes
+      `);
+
+    res.json({
+      database: sizeQuery.rows[0],
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // Initialize database and WebSocket server on startup
 async function startServer() {
@@ -149,9 +224,6 @@ async function startServer() {
 
     // Default user
     await createDefaultUser();
-
-    // Initialize WebSocket stream service
-    streamService = new StreamService(httpServer);
 
     httpServer.listen(port, () => {
       console.log(`Server listening on port ${port}`);
@@ -167,12 +239,6 @@ async function gracefulShutdown(signal) {
   console.log(`${signal} received, shutting down gracefully`);
 
   try {
-    // Stop all streams
-    if (streamService) {
-      console.log("Stopping active streams...");
-      streamService.handleStopStream();
-    }
-
     // Close HTTP server
     httpServer.close(() => {
       console.log("HTTP server closed");

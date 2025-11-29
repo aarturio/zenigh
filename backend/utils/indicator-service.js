@@ -106,22 +106,17 @@ class IndicatorService {
     for (let i = 0; i < bars.length; i++) {
       const bar = bars[i];
 
-      // Build indicators object
+      // Build indicators object with unified param-based structure
       const indicators = {
         momentum: {
           rsi: {
-            value: this.getValueAt(indicatorResults.RSI?.values, i),
-            signal: this.getRSISignal(
-              this.getValueAt(indicatorResults.RSI?.values, i)
-            ),
+            14: this.getValueAt(indicatorResults.RSI?.values, i),
           },
           stochastic: {
-            k: this.getValueAt(indicatorResults.STOCH?.k, i),
-            d: this.getValueAt(indicatorResults.STOCH?.d, i),
-            signal: this.getStochasticSignal(
-              this.getValueAt(indicatorResults.STOCH?.k, i),
-              this.getValueAt(indicatorResults.STOCH?.d, i)
-            ),
+            "14_3": {
+              k: this.getValueAt(indicatorResults.STOCH?.k, i),
+              d: this.getValueAt(indicatorResults.STOCH?.d, i),
+            },
           },
         },
         trend: {
@@ -150,60 +145,43 @@ class IndicatorService {
             200: this.getValueAt(indicatorResults.EMA200?.values, i),
           },
           macd: {
-            value: this.getValueAt(indicatorResults.MACD?.macd, i),
-            signal: this.getValueAt(indicatorResults.MACD?.signal, i),
-            histogram: this.getValueAt(indicatorResults.MACD?.histogram, i),
-            crossover: this.getMACDCrossover(
-              this.getValueAt(indicatorResults.MACD?.macd, i),
-              this.getValueAt(indicatorResults.MACD?.signal, i),
-              this.getValueAt(indicatorResults.MACD?.macd, i - 1),
-              this.getValueAt(indicatorResults.MACD?.signal, i - 1)
-            ),
+            "12_26_9": {
+              value: this.getValueAt(indicatorResults.MACD?.macd, i),
+              signal: this.getValueAt(indicatorResults.MACD?.signal, i),
+              histogram: this.getValueAt(indicatorResults.MACD?.histogram, i),
+            },
           },
           adx: {
-            value: this.getValueAt(indicatorResults.ADX?.values, i),
+            14: this.getValueAt(indicatorResults.ADX?.values, i),
           },
           cci: {
-            value: this.getValueAt(indicatorResults.CCI?.values, i),
+            14: this.getValueAt(indicatorResults.CCI?.values, i),
           },
         },
         volatility: {
-          bollingerBands: {
-            upper: this.getValueAt(indicatorResults.BBANDS?.upper, i),
-            middle: this.getValueAt(indicatorResults.BBANDS?.middle, i),
-            lower: this.getValueAt(indicatorResults.BBANDS?.lower, i),
-            position: this.getBBPosition(
-              parseFloat(bar.close),
-              this.getValueAt(indicatorResults.BBANDS?.upper, i),
-              this.getValueAt(indicatorResults.BBANDS?.middle, i),
-              this.getValueAt(indicatorResults.BBANDS?.lower, i)
-            ),
+          bbands: {
+            "20_2.0": {
+              upper: this.getValueAt(indicatorResults.BBANDS?.upper, i),
+              middle: this.getValueAt(indicatorResults.BBANDS?.middle, i),
+              lower: this.getValueAt(indicatorResults.BBANDS?.lower, i),
+            },
           },
           atr: {
-            value: this.getValueAt(indicatorResults.ATR?.values, i),
+            14: this.getValueAt(indicatorResults.ATR?.values, i),
           },
         },
         volume: {
-          current: parseFloat(bar.volume),
-          sma20: this.getValueAt(indicatorResults.SMA?.values, i), // This should ideally be volume SMA
-          aboveAverage:
-            parseFloat(bar.volume) >
-            this.getValueAt(indicatorResults.SMA?.values, i),
           obv: {
-            value: this.getValueAt(indicatorResults.OBV?.values, i),
+            default: this.getValueAt(indicatorResults.OBV?.values, i),
           },
         },
       };
-
-      // Generate signals
-      const signals = this.generateSignals(indicators);
 
       results.push({
         symbol,
         timeframe,
         timestamp: bar.timestamp,
         indicators,
-        signals,
         dataPointsUsed: bars.length,
       });
     }
