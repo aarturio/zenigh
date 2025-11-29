@@ -165,6 +165,20 @@ const INDICATOR_CONFIG = {
   trend: {
     sma: [5, 8, 10, 13, 20, 34, 50, 100, 150, 200],
     ema: [5, 8, 10, 13, 20, 34, 50, 100, 150, 200],
+    macd: ["12_26_9"],
+    adx: [14],
+    cci: [14],
+  },
+  momentum: {
+    rsi: [14],
+    stochastic: ["14_3"],
+  },
+  volatility: {
+    bbands: ["20_2.0"],
+    atr: [14],
+  },
+  volume: {
+    obv: ["default"],
   },
 };
 

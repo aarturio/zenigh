@@ -28,9 +28,15 @@ const LightweightChart = ({
   useLayoutEffect(() => {
     // Read Chakra CSS variables for colors (canvas doesn't support CSS vars)
     const rootStyles = getComputedStyle(document.documentElement);
-    const primaryColor = rootStyles.getPropertyValue("--chakra-colors-brand-teal").trim() || "#1bf2d9";
-    const textColor = rootStyles.getPropertyValue("--chakra-colors-text-primary").trim() || "#ffffff";
-    const primaryColor30 = rootStyles.getPropertyValue("--chakra-colors-teal-30").trim() || "rgba(27, 242, 217, 0.3)";
+    const primaryColor =
+      rootStyles.getPropertyValue("--chakra-colors-brand-teal").trim() ||
+      "#1bf2d9";
+    const textColor =
+      rootStyles.getPropertyValue("--chakra-colors-text-primary").trim() ||
+      "#ffffff";
+    const primaryColor30 =
+      rootStyles.getPropertyValue("--chakra-colors-teal-30").trim() ||
+      "rgba(27, 242, 217, 0.3)";
 
     // Create chart with initial dimensions
     const chart = createChart(chartContainerRef.current, {

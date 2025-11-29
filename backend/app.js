@@ -5,7 +5,8 @@ import cors from "cors";
 import express from "express";
 
 import { auth } from "./auth.js";
-import { TABLE_MAP, SYMBOLS, INDICATOR_CONFIG } from "./config.js";
+import { TABLE_MAP, SYMBOLS } from "./config.js";
+import db from "./db/db-connection.js";
 import DatabaseOperations from "./db/db-operations.js";
 import DatabaseSchema from "./db/db-schema.js";
 import createDefaultUser from "./db/seed-user.js";
@@ -90,6 +91,39 @@ app.get("/ingest/:startDate/:endDate", async (req, res) => {
   }
 });
 
+app.get("/ingest/:startDate/:endDate/:timeframe", async (req, res) => {
+  try {
+    const { startDate, endDate, timeframe } = req.params;
+    const tableName = TABLE_MAP[timeframe];
+    const data = await coreDataClient.getData(startDate, endDate, timeframe);
+
+    const formattedData = Object.entries(data).flatMap(([symbol, symbolBars]) =>
+      symbolBars.map((bar) => ({
+        symbol: symbol,
+        timestamp: new Date(bar.t),
+        open: bar.o,
+        high: bar.h,
+        low: bar.l,
+        close: bar.c,
+        volume: bar.v,
+        trade_count: bar.n,
+        vwap: bar.vw,
+      }))
+    );
+
+    if (formattedData.length > 0) {
+      await DatabaseOperations.saveMarketData(formattedData, tableName);
+    }
+    res.json({
+      message: "Data ingested!",
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message,
+    });
+  }
+});
+
 app.get("/ta/:symbol/:timeframe", async (req, res) => {
   try {
     const { symbol, timeframe } = req.params;
@@ -98,7 +132,6 @@ app.get("/ta/:symbol/:timeframe", async (req, res) => {
       timeframe
     );
     res.json({
-      message: "TA fetched!",
       data,
     });
   } catch (error) {
@@ -164,6 +197,22 @@ app.get("/market-data/:symbol/:timeframe", async (req, res) => {
     res.json({ bars, indicators });
   } catch (error) {
     console.error(`Failed to fetch market data:`, error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/db-size", async (req, res) => {
+  try {
+    const sizeQuery = await db.raw(`
+        SELECT 
+          pg_size_pretty(pg_database_size(current_database())) as total_size,
+          pg_database_size(current_database()) as size_bytes
+      `);
+
+    res.json({
+      database: sizeQuery.rows[0],
+    });
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });

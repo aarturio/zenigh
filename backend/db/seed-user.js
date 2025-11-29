@@ -6,7 +6,7 @@ async function createDefaultUser() {
   try {
     const defaultEmail = process.env.DEFAULT_USER_EMAIL;
     const defaultPassword = process.env.DEFAULT_USER_PASSWORD;
-    const defaultName = process.env.DEFAULT_USER_NAME || "Admin";
+    const defaultName = process.env.DEFAULT_USER_NAME;
 
     if (!defaultEmail || !defaultPassword) {
       console.log("No default user credentials provided, skipping...");

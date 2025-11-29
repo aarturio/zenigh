@@ -7,7 +7,6 @@ const SignUpForm = () => {
 
   const handleMailingList = (e) => {
     e.preventDefault();
-    // TODO: Add mailing list API integration
     setSubmitted(true);
     setTimeout(() => {
       setSubmitted(false);
