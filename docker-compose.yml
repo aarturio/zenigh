@@ -1,76 +1,14 @@
 services:
   backend:
-    build: ./backend
+    build: .
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=development
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME:-zenigh_db}
       - ALPACA_API_KEY=${ALPACA_API_KEY}
       - ALPACA_SECRET_KEY=${ALPACA_SECRET_KEY}
-      - JWT_SECRET=${JWT_SECRET}
-      - DEFAULT_USER_EMAIL=${DEFAULT_USER_EMAIL}
-      - DEFAULT_USER_PASSWORD=${DEFAULT_USER_PASSWORD}
-      - DEFAULT_USER_NAME=${DEFAULT_USER_NAME}
-      - PORT=3000
-      - TA_SERVICE_URL=http://ta-service:8001
-      - FRONTEND_URL=http://localhost:5173
-    depends_on:
-      db:
-        condition: service_healthy
-      ta-service:
-        condition: service_healthy
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
-
-  db:
-    image: postgres:16
-    environment:
-      - POSTGRES_DB=${DB_NAME}
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-    ports:
-      - "5433:5432"
-    volumes:
-      - zenigh_postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  frontend:
-    build: ./frontend
-    ports:
-      - "5173:5173"
-    volumes:
-      - ./frontend:/src
-      - /src/node_modules
-    environment:
-      - VITE_BACKEND_URL=http://localhost:3000
-    depends_on:
-      - backend
-
-  ta-service:
-    build: ./ta
-    ports:
-      - "8001:8001"
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8001/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-    environment:
+      - DB_PATH=/app/data/zenigh.duckdb
       - PYTHONUNBUFFERED=1
-    # Optional: Add volume for hot-reload during development
     volumes:
-      - ./ta:/app
-
-volumes:
-  zenigh_postgres_data:
+      - ./src:/app/src
+      - ./data:/app/data
+    restart: unless-stopped
