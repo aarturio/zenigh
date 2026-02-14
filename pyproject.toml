@@ -1,0 +1,26 @@
+[project]
+name = "zenigh"
+version = "2.0.0"
+description = "Market data and technical analysis service"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi[standard]>=0.121.0",
+    "numpy>=2.3.4",
+    "ta-lib>=0.6.8",
+    "duckdb>=1.0.0",
+    "httpx>=0.27.0",
+    "pytz>=2024.1",
+    "textual>=7.5.0",
+    "textual-dev>=1.8.0",
+    "textual-plotext>=1.0.1",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.0.0",
+    "ruff>=0.4.0",
+]
+
+[tool.ruff]
+line-length = 100

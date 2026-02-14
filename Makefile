@@ -1,48 +1,33 @@
-# Load environment variables from .env file
-include .env
-export
-
-.PHONY: help build start down logs clean install backend frontend restart
+.PHONY: help start stop logs clean ui server lint test install
 
 help: ## Show this help message
-	@echo 'Usage: make [arg]'
+	@echo 'Usage: make [target]'
 	@echo ''
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-install-dev: ## Install dependencies
-	cd backend && npm install
+install: ## Install dependencies
+	uv sync
 
-start-dev: ## Start Docker services with build
+start: ## Start Docker services
 	docker-compose up --build
 
-stop-dev: ## Stop Docker services
+stop: ## Stop Docker services
 	docker-compose down
 
-logs-dev: ## Show Docker logs
+logs: ## Show Docker logs
 	docker-compose logs -f
 
-build-prod: ## EC2 Build and start containers in background
-	docker-compose -f docker-compose.prod.yml up -d --build
+clean: ## Remove database and cache
+	rm -rf data/ __pycache__ src/__pycache__ src/api/__pycache__
 
-logs-prod: ## EC2 View logs
-	docker-compose -f docker-compose.prod.yml logs -f
+ui: ## Run TUI
+	uv run python -m src.api.main
 
-clean: ## Stop services and remove volumes
-	docker-compose down --volumes
-	docker system prune --volumes -f
+server: ## Run API server only
+	uv run uvicorn src.api.server:app --host 0.0.0.0 --port 3000 --reload
 
-start-instance: ## Start EC2 instance
-	aws ec2 start-instances --instance-ids $(EC2_INSTANCE_ID)
+lint: ## Run linter
+	uv run ruff check src/
 
-stop-instance: ## Stop EC2 instance
-	aws ec2 stop-instances --instance-ids $(EC2_INSTANCE_ID)
-
-ssh-connect: ## Connect to EC2 instance
-	ssh -i zenigh-key.pem ubuntu@$(EC2_INSTANCE_PUBLIC_IP)
-
-make lint:
-	cd backend && npm run lint:fix
-	cd frontend && npm run lint:fix
-
-make test:
-	cd backend && npm run test
+test: ## Run tests
+	uv run pytest
